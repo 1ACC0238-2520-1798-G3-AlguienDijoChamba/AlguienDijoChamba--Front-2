@@ -17,6 +17,7 @@ class _MainPageState extends State<MainPage> {
     _controller = PersistentTabController(initialIndex: 0);
   }
 
+  //navegacion remplazas ps
   List<Widget> _buildScreens() {
     return const [
       Scaffold(body: Center(child: Text('Home Page'))), 
