@@ -9,7 +9,6 @@ class RegisterUser {
   Future<User> call({
     required String email,
     required String password,
-    required String dni,
     required String nombres,
     required String apellidos,
     required String celular,
@@ -17,7 +16,6 @@ class RegisterUser {
     return repository.register(
       email: email,
       password: password,
-      dni: dni,
       nombres: nombres,
       apellidos: apellidos,
       celular: celular,

@@ -17,7 +17,6 @@ class _RegisterPageState extends State<RegisterPage> {
   // Controllers
   final TextEditingController firstNameController = TextEditingController();
   final TextEditingController lastNameController = TextEditingController();
-  final TextEditingController dniController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
@@ -37,11 +36,6 @@ class _RegisterPageState extends State<RegisterPage> {
     return null;
   }
 
-  String? _validateDni(String? value) {
-    if (value == null || value.isEmpty) return 'DNI is required';
-    if (!RegExp(r'^\d+$').hasMatch(value)) return 'Enter a valid DNI';
-    return null;
-  }
 
   String? _validateEmail(String? value) {
     if (value == null || value.isEmpty) return 'Email is required';
@@ -80,15 +74,16 @@ class _RegisterPageState extends State<RegisterPage> {
       final user = await widget.registerUser.call(
         email: emailController.text,
         password: passwordController.text,
-        dni: dniController.text,
         nombres: firstNameController.text,
         apellidos: lastNameController.text,
         celular: phoneController.text,
       );
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('User ${user.nombres} registered successfully!')),
+        SnackBar(content: Text('User registered successfully! ID: ${user.id}')),
       );
+
+      Navigator.pushReplacementNamed(context, '/login');
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: $e')),
@@ -193,15 +188,6 @@ class _RegisterPageState extends State<RegisterPage> {
                   keyboard: TextInputType.name,
                   obscureText: false,
                   validator: _validateName,
-                ),
-                IconTextField(
-                  label: 'DNI',
-                  hint: 'Enter your DNI',
-                  icon: Icons.badge_outlined,
-                  controller: dniController,
-                  keyboard: TextInputType.number,
-                  obscureText: false,
-                  validator: _validateDni,
                 ),
                 IconTextField(
                   label: 'Email',
