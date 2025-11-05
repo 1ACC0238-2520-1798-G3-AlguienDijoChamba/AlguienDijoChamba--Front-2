@@ -1,3 +1,6 @@
+import 'package:alguiendijochamba_app_flutter/core/di/injector.dart';
+import 'package:alguiendijochamba_app_flutter/features/search/domain/repositories/professional_repository.dart';
+import 'package:alguiendijochamba_app_flutter/features/search/presentation/pages/search_page.dart';
 import 'package:flutter/material.dart';
 import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart';
 
@@ -16,15 +19,17 @@ class _MainPageState extends State<MainPage> {
     super.initState();
     _controller = PersistentTabController(initialIndex: 0);
   }
+  
+
 
   //navegacion remplazas ps
   List<Widget> _buildScreens() {
-    return const [
-      Scaffold(body: Center(child: Text('Home Page'))), 
-      Scaffold(body: Center(child: Text('Search Page'))), // Search
-      Scaffold(body: Center(child: Text('Process Page'))), // Process
-      Scaffold(body: Center(child: Text('Rewards Page'))), // Rewards
-      Scaffold(body: Center(child: Text('Profile Page'))), // Profile
+    return [
+      const Scaffold(body: Center(child: Text('Home Page'))), 
+      SearchPage(repository: professionalRepository),
+      const Scaffold(body: Center(child: Text('Process Page'))), // Process
+      const Scaffold(body: Center(child: Text('Rewards Page'))), // Rewards
+      const Scaffold(body: Center(child: Text('Profile Page'))), // Profile
     ];
   }
 

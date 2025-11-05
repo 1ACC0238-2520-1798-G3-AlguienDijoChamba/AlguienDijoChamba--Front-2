@@ -20,6 +20,7 @@ class AppRouter {
         return MaterialPageRoute(
           builder: (_) => LoginPage(loginUser: loginUser),
         );
+        
       default:
         return MaterialPageRoute(
           builder: (_) => Scaffold(

@@ -3,7 +3,13 @@ import 'package:alguiendijochamba_app_flutter/core/navigation/app_router.dart';
 import 'package:flutter/material.dart';
 
 void main() {
-  final appRouter = AppRouter(registerUser: registerUserUseCase, loginUser: loginUserUseCase);
+
+  WidgetsFlutterBinding.ensureInitialized();
+  final appRouter = AppRouter(
+    // 💡 Usamos las variables importadas del inyector
+    registerUser: registerUserUseCase, 
+    loginUser: loginUserUseCase,
+  );
   runApp(MyApp(appRouter: appRouter));
 }
 

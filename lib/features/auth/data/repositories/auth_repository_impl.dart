@@ -2,15 +2,28 @@ import 'package:alguiendijochamba_app_flutter/features/auth/data/datasources/aut
 import 'package:alguiendijochamba_app_flutter/features/auth/domain/entities/session.dart';
 import 'package:alguiendijochamba_app_flutter/features/auth/domain/entities/user.dart';
 import 'package:alguiendijochamba_app_flutter/features/auth/domain/repositories/auth_repository.dart';
+import '../../../../core/storage/token_storage.dart'; // Importar la dependencia de Storage
 
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource remoteDataSource;
+  final TokenStorage tokenStorage; // 1. Declarar la dependencia de Storage
 
-  AuthRepositoryImpl({required this.remoteDataSource});
+  // 2. Modificar el constructor para requerir ambas dependencias
+  AuthRepositoryImpl({
+    required this.remoteDataSource,
+    required this.tokenStorage, 
+  });
 
   @override
   Future<Session> login(String email, String password) async {
-    return await remoteDataSource.login(email, password);
+    // Llama a la API para obtener el token
+    final session = await remoteDataSource.login(email, password);
+    
+    // 3. LÓGICA CRÍTICA: Guardar el token de forma asíncrona.
+    // Esto resuelve el error de asincronía ('Token MISSING').
+    await tokenStorage.saveToken(session.token); 
+
+    return session;
   }
 
   @override
@@ -29,5 +42,4 @@ class AuthRepositoryImpl implements AuthRepository {
       celular: celular,
     );
   }
-
 }
