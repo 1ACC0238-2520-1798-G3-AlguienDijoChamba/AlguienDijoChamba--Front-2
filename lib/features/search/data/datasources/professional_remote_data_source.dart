@@ -23,6 +23,11 @@ class ProfessionalRemoteDataSourceImpl implements ProfessionalRemoteDataSource {
   Future<List<dynamic>> searchProfessionals(SearchProfessionalsQuery query) async {
     final params = query.toQueryParams();
     final endpoint = '/reputation';
+    
+    // 💡 LÍNEA DE DEBUG CRÍTICA
+    final queryString = Uri(queryParameters: params).query;
+    print('DEBUG BUSQUEDA API: $endpoint?$queryString'); // Esto imprimirá la URL completa
+
     final responseData = await apiClient.get(endpoint, queryParams: params);
 
     if (responseData is! List) {
@@ -31,18 +36,27 @@ class ProfessionalRemoteDataSourceImpl implements ProfessionalRemoteDataSource {
     return responseData;
   }
 
-  @override
-  Future<Map<String, dynamic>> getReputationByProfessionalId(String professionalId) async {
-    final response = await apiClient.get(
-      '/reputation',
-      queryParams: {'professionalId': professionalId},
-    );
+@override
+Future<Map<String, dynamic>> getReputationByProfessionalId(String professionalId) async {
+  final response = await apiClient.get(
+    '/reputation',
+    queryParams: {'professionalId': professionalId},
+  );
 
-    if (response is! Map<String, dynamic>) {
-      throw Exception("Formato de respuesta de reputación incorrecto.");
-    }
-    return response;
+  // El backend devuelve una LISTA ([{...}]), aunque solo haya un resultado.
+  if (response is! List || response.isEmpty) {
+    throw Exception("Reputación no encontrada para el ID $professionalId o formato de respuesta incorrecto.");
   }
+
+  // Tomamos el primer y único elemento de la lista.
+  final reputationJson = response.first; 
+
+  if (reputationJson is! Map<String, dynamic>) {
+    throw Exception("El elemento de reputación para el ID $professionalId no es un objeto válido.");
+  }
+
+  return reputationJson;
+}
 
   @override
   Future<Map<String, dynamic>> getProfessionalProfileJson(String professionalId) async {
