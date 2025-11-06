@@ -18,32 +18,37 @@ class TagRepositoryImpl implements TagRepository {
   }
   
   // 2. NUEVO: Implementación de la búsqueda con lógica AND (intersección)
-  @override
+@override
   Future<List<String>> getProfessionalIdsByTags({required List<String> tagIds}) async {
     if (tagIds.isEmpty) {
-      // Si no hay tags seleccionados, devolvemos una lista vacía.
-      return []; 
+      return [];
     }
 
-    // A. Realizar todas las llamadas a la API de forma concurrente
-    final futures = tagIds.map((tagId) {
-      return remoteDataSource.getProfessionalIdsByTag(tagId: tagId);
-    }).toList();
-    
-    // Esperamos a que todas las peticiones terminen
-    final List<List<String>> resultsByTag = await Future.wait(futures);
+    // Si solo hay un tag, lo buscamos directamente
+    if (tagIds.length == 1) {
+      return await remoteDataSource.getProfessionalIdsByTag(tagId: tagIds.first);
+    }
 
-    // B. Realizar la Intersección (AND lógico)
-    // Inicializamos con el primer resultado (o un Set vacío si resultsByTag está vacío, aunque la validación superior lo evita)
-    Set<String> commonProfessionals = resultsByTag.first.toSet(); 
-    
-    // Iteramos sobre el resto de las listas para encontrar IDs comunes
-    for (int i = 1; i < resultsByTag.length; i++) {
-      // RetainWhere mantiene solo los elementos que están también en la lista actual
-      commonProfessionals.retainWhere((id) => resultsByTag[i].contains(id));
+    // 🌟 Lógica de Intersección para MÚLTIPLES Tags 🌟
+    List<List<String>> listOfIdLists = [];
+
+    // 1. Obtener la lista de IDs para CADA tag
+    for (String tagId in tagIds) {
+      final ids = await remoteDataSource.getProfessionalIdsByTag(tagId: tagId);
+      listOfIdLists.add(ids);
     }
     
-    // Devolvemos la lista final de profesionales que tienen TODOS los tags
-    return commonProfessionals.toList();
+    // 2. Encontrar la INTERSECCIÓN (IDs presentes en TODAS las listas)
+    // Usamos el primer conjunto como base y hacemos intersección con el resto.
+    if (listOfIdLists.isEmpty) return [];
+
+    Set<String> intersectionSet = listOfIdLists.first.toSet();
+
+    for (int i = 1; i < listOfIdLists.length; i++) {
+        intersectionSet = intersectionSet.intersection(listOfIdLists[i].toSet());
+    }
+
+    return intersectionSet.toList();
   }
+
 }

@@ -5,6 +5,7 @@ import 'package:alguiendijochamba_app_flutter/features/search/presentation/cubit
 import 'package:alguiendijochamba_app_flutter/features/search/presentation/cubit/tag_filter_state.dart';
 import 'package:alguiendijochamba_app_flutter/features/search/presentation/widgets/FilterTopBar.dart';
 import 'package:alguiendijochamba_app_flutter/features/search/presentation/widgets/ProfessionalSearchResults.dart';
+import 'package:alguiendijochamba_app_flutter/features/search/presentation/widgets/SearchBarWidget.dart';
 import 'package:alguiendijochamba_app_flutter/features/search/presentation/widgets/TagFilterModal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -13,6 +14,7 @@ class SearchPage extends StatelessWidget {
   // Recibimos los Use Cases para poder inicializar los Cubits
   final SearchProfessionalsUseCase searchUseCase;
   final GetAllTagsUseCase getAllTagsUseCase; 
+  
 
   const SearchPage({
     super.key, 
@@ -51,44 +53,47 @@ class SearchPage extends StatelessWidget {
       
       // 3. Listener: Dispara la búsqueda cuando los filtros de tags cambian
       child: BlocListener<TagFilterCubit, TagFilterState>(
-        // 🚀 CORRECCIÓN 1: El listenWhen ahora es simple, solo verifica el tipo
-        listenWhen: (previous, current) => current is TagFilterLoaded,
+        // 🚀 MEJORA: Solo escucha si los tags seleccionados realmente han cambiado.
+        listenWhen: (previous, current) {
+          if (previous is TagFilterLoaded && current is TagFilterLoaded) {
+            // Compara las listas de IDs de tags.
+            return previous.selectedTagIds.toString() != current.selectedTagIds.toString();
+          }
+          // También se activa si pasa de un estado no Loaded a Loaded (ej: después de cargar por primera vez).
+          return current is TagFilterLoaded;
+        },
         
         listener: (context, state) {
-          // ⚠️ Coordinación: Obtenemos la instancia del SearchCubit
-          final searchCubit = context.read<SearchCubit>();
-          
-          // Reiniciamos la búsqueda con los nuevos IDs de tags
+          // El Listener ya solo se ejecuta si la lista de tags cambió o si cargó por primera vez.
           if (state is TagFilterLoaded) {
-            // 🚀 CORRECCIÓN 2: Usamos el .read() para verificar si la lista realmente cambió,
-            // si la lista ha cambiado, disparamos runSearch
-            if (searchCubit.currentTagFilters.toString() != state.selectedTagIds.toString()) {
-                searchCubit.runSearch(newTagFilters: state.selectedTagIds);
-            }
+            // ⚠️ La búsqueda se dispara directamente sin doble chequeo.
+            context.read<SearchCubit>().runSearch(newTagFilters: state.selectedTagIds);
           }
         },
         
         child: Scaffold(
+          // 🛑 NO HAY APPBAR
           body: Column(
             children: [
-              // ➡️ TopBar con el Icono de Filtro
+              // ➡️ 1. BARRA DE FILTROS DE TAGS (FilterTopBar) - PRIMERO
               BlocBuilder<TagFilterCubit, TagFilterState>(
                 builder: (context, state) {
-                  // 🚀 CORRECCIÓN 3: Acceso seguro a selectedTagIds en el BlocBuilder
                   final isFilterActive = 
                       state is TagFilterLoaded ? state.selectedTagIds.isNotEmpty : false;
                   
                   return FilterTopBar(
-                    title: 'BÚSQUEDA',
+                    title: 'Busqueda', // Título de la barra de control superior
                     isFilterActive: isFilterActive,
                     onFilterPressed: () => _showTagFilterModal(context),
                   );
                 },
               ),
+
+              // ➡️ 2. BARRA DE BÚSQUEDA (SearchBarWidget) - DEBAJO DE LA BARRA DE FILTROS
+              const SearchBarWidget(), 
               
-              // ➡️ Lista de Resultados (El resto de la pantalla)
+              // ➡️ 3. Lista de Resultados
               const Expanded(
-                // ¡Este widget está listo para consumir los resultados!
                 child: ProfessionalSearchResults(), 
               ),
             ],

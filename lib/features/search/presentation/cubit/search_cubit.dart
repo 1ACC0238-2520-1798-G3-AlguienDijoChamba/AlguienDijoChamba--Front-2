@@ -4,48 +4,69 @@ import 'search_state.dart';
 import '../../domain/usecases/search_professionals_usecase.dart';
 
 class SearchCubit extends Cubit<SearchState> {
-  // El Use Case ya devuelve List<SearchedProfessionalEntity>
   final SearchProfessionalsUseCase searchProfessionalsUseCase; 
   
   // Parámetros internos de búsqueda y paginación
-  // 💡 Mejor práctica: Paginación y filtros deben ser parte del estado interno
   int _page = 1;
   static const int _limit = 10;
   List<String> _currentTagFilters = [];
+  String _currentSearchTerm = ''; // 🌟 AGREGADO: Estado interno para el texto de búsqueda
   
-  // 🚀 GETTER CRUCIAL: Necesario para la coordinación en SearchPage
+  // GETTERS
   List<String> get currentTagFilters => _currentTagFilters; 
+  String get currentSearchTerm => _currentSearchTerm; 
   
   SearchCubit({
     required this.searchProfessionalsUseCase,
-  }) : super(SearchInitial()); // Inicia el estado
+  }) : super(SearchInitial()); 
 
   // -----------------------------------------------------
-  // A. Búsqueda Principal (Inicial o Filtrada)
+  // A. Búsqueda Principal (Inicial, por Tag o por Texto)
   // -----------------------------------------------------
 
-  Future<void> runSearch({List<String>? newTagFilters}) async {
-    // Si hay nuevos filtros, reiniciamos la paginación y guardamos los filtros
-    if (newTagFilters != null) {
-      _currentTagFilters = newTagFilters;
-      _page = 1; // 🎯 Reinicia la página al aplicar un nuevo filtro
-    } 
+  Future<void> runSearch({
+    List<String>? newTagFilters,
+    String? newSearchTerm, // 🌟 NUEVO PARÁMETRO
+  }) async {
     
-    // Evita cargas simultáneas
+    bool filtersChanged = false;
+
+    // 1. Manejo de Filtros por Tags
+    if (newTagFilters != null) {
+        if (_currentTagFilters.toString() != newTagFilters.toString()) {
+            _currentTagFilters = newTagFilters;
+            filtersChanged = true;
+        } 
+    }
+    
+    // 2. Manejo del Término de Búsqueda
+    final effectiveSearchTerm = newSearchTerm ?? _currentSearchTerm;
+    
+    if (_currentSearchTerm != effectiveSearchTerm) {
+      _currentSearchTerm = effectiveSearchTerm;
+      filtersChanged = true;
+    }
+
+    // Reinicia la página solo si algo cambió
+    if (filtersChanged) {
+        _page = 1; 
+    }
+    
     if (state is SearchLoading) return;
     
     emit(SearchLoading());
 
     try {
-      // 1. Construye la Query con el estado interno
-        final query = SearchProfessionalsQuery(
-              page: _page,
-              limit: _limit,
-              // 🔑 Aquí se pasan los filtros de tags seleccionados
-              tagIds: _currentTagFilters, 
-        );
+      // 1. Construye la Query con todos los parámetros
+      final query = SearchProfessionalsQuery(
+        page: _page,
+        limit: _limit,
+        tagIds: _currentTagFilters, 
+        // 🔑 Pasa el término de búsqueda
+        searchTerm: _currentSearchTerm.isEmpty ? null : _currentSearchTerm, 
+      );
 
-      // 2. Ejecuta el Use Case (devuelve List<SearchedProfessionalEntity>)
+      // 2. Ejecuta el Use Case
       final newProfessionals = await searchProfessionalsUseCase(query);
       
       final hasMore = newProfessionals.length == _limit;
@@ -65,24 +86,24 @@ class SearchCubit extends Cubit<SearchState> {
   // -----------------------------------------------------
 
   Future<void> loadMore() async {
-    // Solo cargamos si es SearchLoaded y hay más
     if (state is! SearchLoaded || !(state as SearchLoaded).hasMore) return;
 
     final currentState = state as SearchLoaded;
-    _page++; // Avanza a la siguiente página
+    _page++; 
 
-    // Emitimos el estado de "Cargando Más" manteniendo los resultados actuales
     emit(SearchLoadingMore(
       professionals: currentState.professionals,
       hasMore: currentState.hasMore,
     ));
 
     try {
-      // 1. Construye la Query con la nueva página
+      // 1. Construye la Query, manteniendo el searchTerm
       final query = SearchProfessionalsQuery(
         page: _page,
         limit: _limit,
-        tagIds: _currentTagFilters, // Mantiene los filtros actuales
+        tagIds: _currentTagFilters, 
+        // 🔑 Mantiene el término de búsqueda
+        searchTerm: _currentSearchTerm.isEmpty ? null : _currentSearchTerm, 
       );
       
       // 2. Ejecuta la carga
@@ -98,9 +119,8 @@ class SearchCubit extends Cubit<SearchState> {
       ));
 
     } catch (e) {
-      _page--; // Revertir la página si falla
+      _page--; 
       emit(SearchError(message: 'Error al cargar más resultados: ${e.toString()}'));
-      // Volver al estado Loaded para no bloquear la UI
       emit(currentState); 
     }
   }

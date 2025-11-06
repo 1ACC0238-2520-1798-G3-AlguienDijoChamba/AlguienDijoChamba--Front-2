@@ -52,7 +52,10 @@ final TagRepository tagRepository = TagRepositoryImpl(tagRemoteDataSource);
 final GetProfessionalsListUseCase getProfessionalsListUseCase =
     GetProfessionalsListUseCase(professionalRepository);
 final SearchProfessionalsUseCase searchProfessionalsUseCase =
-    SearchProfessionalsUseCase(professionalRepository);
+    SearchProfessionalsUseCase(
+        professionalRepository, // 1. Para la búsqueda final
+        tagRepository,          // 2. Para el pre-filtrado de IDs por tags
+    );
 final GetAllTagsUseCase getAllTagsUseCase =
     GetAllTagsUseCase(tagRepository);
 
