@@ -1,35 +1,56 @@
-// Archivo: lib/features/professional/data/datasources/professional_remote_data_source.dart
+import 'package:alguiendijochamba_app_flutter/features/search/domain/query/search_professionals_query.dart';
+import '../../../../core/api/api_client.dart';
 
-import '../../../../core/api/api_client.dart'; 
-import '../models/professional_model.dart';
-
+/// Define la interfaz del datasource
 abstract class ProfessionalRemoteDataSource {
-  // 🚨 CORRECCIÓN 1: Cambiamos el contrato para que devuelva una LISTA
-  Future<List<ProfessionalModel>> getAllProfessionals(); 
+  /// Obtiene el listado de reputaciones (búsqueda general)
+  Future<List<dynamic>> searchProfessionals(SearchProfessionalsQuery query);
+
+  /// Obtiene la reputación individual por ID
+  Future<Map<String, dynamic>> getReputationByProfessionalId(String professionalId);
+
+  /// Obtiene el perfil del profesional por ID
+  Future<Map<String, dynamic>> getProfessionalProfileJson(String professionalId);
 }
 
+/// Implementación concreta
 class ProfessionalRemoteDataSourceImpl implements ProfessionalRemoteDataSource {
   final ApiClient apiClient;
 
   ProfessionalRemoteDataSourceImpl(this.apiClient);
 
   @override
-  // 🚨 CORRECCIÓN 2: Implementación para obtener la LISTA COMPLETA
-  Future<List<ProfessionalModel>> getAllProfessionals() async {
-    // La llamada no necesita headers, el ApiClient los añade automáticamente
-    final responseData = await apiClient.get('/reputation');
-    
-    // Verificación de tipo: si el backend devuelve un solo objeto o null
+  Future<List<dynamic>> searchProfessionals(SearchProfessionalsQuery query) async {
+    final params = query.toQueryParams();
+    final endpoint = '/reputation';
+    final responseData = await apiClient.get(endpoint, queryParams: params);
+
     if (responseData is! List) {
-      throw Exception("Se esperaba una lista de profesionales de /reputation, pero se recibió un tipo de dato diferente.");
+      throw Exception("Se esperaba una lista de resúmenes de reputación.");
     }
+    return responseData;
+  }
 
-    // 🚨 CORRECCIÓN 3: El Mapeo CLAVE: Transformamos List<dynamic> a List<ProfessionalModel>
-    final List<ProfessionalModel> professionalList = (responseData as List)
-        // Usamos el constructor alternativo que hicimos para manejar el JSON de Reputación
-        .map((jsonItem) => ProfessionalModel.fromReputationJson(jsonItem as Map<String, dynamic>))
-        .toList();
+  @override
+  Future<Map<String, dynamic>> getReputationByProfessionalId(String professionalId) async {
+    final response = await apiClient.get(
+      '/reputation',
+      queryParams: {'professionalId': professionalId},
+    );
 
-    return professionalList;
+    if (response is! Map<String, dynamic>) {
+      throw Exception("Formato de respuesta de reputación incorrecto.");
+    }
+    return response;
+  }
+
+  @override
+  Future<Map<String, dynamic>> getProfessionalProfileJson(String professionalId) async {
+    final responseData = await apiClient.get('/professionals/$professionalId');
+
+    if (responseData is! Map<String, dynamic>) {
+      throw Exception("Formato de respuesta de perfil individual incorrecto.");
+    }
+    return responseData;
   }
 }

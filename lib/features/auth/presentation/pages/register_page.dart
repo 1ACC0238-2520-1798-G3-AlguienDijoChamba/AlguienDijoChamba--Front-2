@@ -1,5 +1,5 @@
 import 'package:alguiendijochamba_app_flutter/features/auth/domain/usecases/register_user.dart';
-import 'package:alguiendijochamba_app_flutter/features/auth/presentation/widgets/TopBar.dart';
+import 'package:alguiendijochamba_app_flutter/features/shared/widgets/TopBar.dart';
 import 'package:alguiendijochamba_app_flutter/features/auth/presentation/widgets/text_field.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';

@@ -1,5 +1,6 @@
 import 'package:alguiendijochamba_app_flutter/core/di/injector.dart';
-import 'package:alguiendijochamba_app_flutter/features/search/domain/repositories/professional_repository.dart';
+import 'package:alguiendijochamba_app_flutter/features/search/domain/usecases/get_all_tags_usecase.dart';
+import 'package:alguiendijochamba_app_flutter/features/search/domain/usecases/search_professionals_usecase.dart';
 import 'package:alguiendijochamba_app_flutter/features/search/presentation/pages/search_page.dart';
 import 'package:flutter/material.dart';
 import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart';
@@ -13,20 +14,26 @@ class MainPage extends StatefulWidget {
 
 class _MainPageState extends State<MainPage> {
   late PersistentTabController _controller;
+  late final SearchProfessionalsUseCase searchUseCase;
+  late final GetAllTagsUseCase getAllTagsUseCase;
+  
 
   @override
   void initState() {
     super.initState();
+    searchUseCase = injector<SearchProfessionalsUseCase>();
+    getAllTagsUseCase = injector<GetAllTagsUseCase>();
+    
     _controller = PersistentTabController(initialIndex: 0);
   }
-  
-
-
   //navegacion remplazas ps
   List<Widget> _buildScreens() {
     return [
       const Scaffold(body: Center(child: Text('Home Page'))), 
-      SearchPage(repository: professionalRepository),
+      SearchPage(
+              searchUseCase: searchUseCase,
+              getAllTagsUseCase: getAllTagsUseCase,
+            ),      
       const Scaffold(body: Center(child: Text('Process Page'))), // Process
       const Scaffold(body: Center(child: Text('Rewards Page'))), // Rewards
       const Scaffold(body: Center(child: Text('Profile Page'))), // Profile
