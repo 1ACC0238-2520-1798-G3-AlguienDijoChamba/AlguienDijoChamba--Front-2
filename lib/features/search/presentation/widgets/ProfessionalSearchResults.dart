@@ -1,5 +1,3 @@
-// Archivo: lib/features/search/presentation/widgets/professional_search_results.dart
-
 import 'package:alguiendijochamba_app_flutter/features/search/domain/entities/search_profesional_entity.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -11,39 +9,28 @@ import '../cubit/search_cubit.dart';
 import '../cubit/search_state.dart'; 
 import 'professional_card.dart'; 
 
-// --- WIDGET TEMPORAL (DEBE SER EL MISMO QUE USAS EN APP_ROUTER) ---
-// Asumimos que esta clase está disponible y espera un String.
-class ProfessionalDetailsPage extends StatelessWidget {
-  final String professionalId;
-  const ProfessionalDetailsPage({super.key, required this.professionalId});
-  
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Detalles del Profesional')),
-      body: Center(
-        child: Text('Cargando datos para el Profesional ID: $professionalId', style: const TextStyle(fontSize: 16)),
-      ),
-    );
-  }
-}
+// --- IMPORTACIONES PARA PROCESS FEATURE ---
+import 'package:alguiendijochamba_app_flutter/features/process/presentation/pages/professional_detail_page.dart';
+//IMPORTS DE PROCESS
+import 'package:alguiendijochamba_app_flutter/core/di/injector.dart';
+import 'package:alguiendijochamba_app_flutter/features/process/presentation/blocs/process_bloc.dart';
 // ------------------------------------------------------------------
 
 class ProfessionalSearchResults extends StatelessWidget {
   const ProfessionalSearchResults({super.key});
 
   // 🚀 FUNCIÓN DE NAVEGACIÓN UNIFICADA
-  void _navigateToProfile(BuildContext context, SearchedProfessionalEntity prof) {
-    // Usamos el método de navegación del paquete PersistentNavBar para asegurar el push.
-    PersistentNavBarNavigator.pushNewScreen(
-      context,
-      screen: ProfessionalDetailsPage(
-        professionalId: prof.professionalId, // Pasa el ID (asumido como String)
-      ),
-      withNavBar: false, // Oculta la barra inferior en la nueva pantalla
-      pageTransitionAnimation: PageTransitionAnimation.cupertino,
-    );
-  }
+void _navigateToProfile(BuildContext context, SearchedProfessionalEntity prof) {
+  PersistentNavBarNavigator.pushNewScreen(
+    context,
+    screen: BlocProvider<ProcessBloc>(
+      create: (_) => injector<ProcessBloc>(),
+      child: ProfessionalDetailPage(professionalId: prof.professionalId),
+    ),
+    withNavBar: false,
+    pageTransitionAnimation: PageTransitionAnimation.cupertino,
+  );
+}
 
   @override
   Widget build(BuildContext context) {
