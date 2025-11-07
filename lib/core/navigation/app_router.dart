@@ -1,15 +1,38 @@
-// Archivo: AppRouter.dart (CORREGIDO)
+// Archivo: AppRouter.dart (COMPLETO Y CORREGIDO)
 
 import 'package:alguiendijochamba_app_flutter/features/shared/widgets/placeholder_screen.dart';
 import 'package:flutter/material.dart';
+
+// --- Importaciones de Páginas ---
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
+import '../../features/search/presentation/pages/search_page.dart';
+// import '../../features/professionals/presentation/pages/professional_details_page.dart';
+
+
+// --- Importaciones de UseCases ---
 import '../../features/auth/domain/usecases/register_user.dart';
 import '../../features/auth/domain/usecases/login_user.dart';
-// Importaciones de Search
 import '../../features/search/domain/usecases/search_professionals_usecase.dart';
 import '../../features/search/domain/usecases/get_all_tags_usecase.dart';
-import '../../features/search/presentation/pages/search_page.dart'; // Asegúrate de que la ruta de importación es correcta
+
+// --- Placeholder temporal para la nueva ruta (CORREGIDO) ---
+class ProfessionalDetailsPage extends StatelessWidget {
+  // 💡 CORRECCIÓN: Ahora espera un String
+  final String professionalId;
+  const ProfessionalDetailsPage({super.key, required this.professionalId});
+  
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Detalles del Profesional')),
+      body: Center(
+        child: Text('Cargando datos para el Profesional ID: $professionalId', style: const TextStyle(fontSize: 16)),
+      ),
+    );
+  }
+}
+// ------------------------------------------------------------------
 
 
 class AppRouter {
@@ -27,6 +50,9 @@ class AppRouter {
 
   Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
+      // ----------------------------------------------------
+      // RUTAS DE AUTENTICACIÓN
+      // ----------------------------------------------------
       case '/register':
         return MaterialPageRoute(
           builder: (_) => RegisterPage(registerUser: registerUser),
@@ -35,8 +61,10 @@ class AppRouter {
         return MaterialPageRoute(
           builder: (_) => LoginPage(loginUser: loginUser),
         );
-      
-      // 1. RUTA DE BÚSQUEDA (USADA POR PersistentBottomNavBar Y HomeHeader)
+        
+      // ----------------------------------------------------
+      // RUTA DE BÚSQUEDA
+      // ----------------------------------------------------
       case '/search_page': 
         return MaterialPageRoute(
           builder: (_) => SearchPage(
@@ -45,34 +73,48 @@ class AppRouter {
           ),
         );
         
-      // 1. RUTA DE PLANES Y BENEFICIOS
+      // ----------------------------------------------------
+      // 🚀 RUTA DE DETALLES DEL PROFESIONAL (CORREGIDA)
+      // ----------------------------------------------------
+      case '/professional_details': 
+        // 💡 CORRECCIÓN: Esperamos un String para el ID.
+        final professionalId = settings.arguments as String?; 
+        
+        if (professionalId == null) {
+            // Si el ID es nulo, mostramos una pantalla de error
+            return MaterialPageRoute(
+              builder: (_) => const PlaceholderScreen(title: 'Error de Navegación: ID no proporcionado'),
+            );
+        }
+
+        // Navegamos a la pantalla de detalles, pasando el ID (como String)
+        return MaterialPageRoute(
+          builder: (_) => ProfessionalDetailsPage(professionalId: professionalId),
+        );
+        
+      // ----------------------------------------------------
+      // OTRAS RUTAS DE LA APP (Usan PlaceholderScreen temporalmente)
+      // ----------------------------------------------------
       case '/plans_and_benefits':
         return MaterialPageRoute(
-          // 🛑 Usamos PlaceholderScreen
           builder: (_) => const PlaceholderScreen(title: 'Planes y Beneficios'), 
         );
-      
-      // 2. RUTA DE NOTIFICACIONES
       case '/notifications':
         return MaterialPageRoute(
-          // 🛑 Usamos PlaceholderScreen
           builder: (_) => const PlaceholderScreen(title: 'Notificaciones'),
         );
-
-      // 3. RUTA DE CHAT
       case '/chat':
         return MaterialPageRoute(
-          // 🛑 Usamos PlaceholderScreen
           builder: (_) => const PlaceholderScreen(title: 'Chat'),
         );
-
-      // 4. RUTA DE PERFIL (VERSIÓN FULLSCREEN)
       case '/profile_page_full':
         return MaterialPageRoute(
-          // 🛑 Usamos PlaceholderScreen
           builder: (_) => const PlaceholderScreen(title: 'Mi Perfil'),
         );
         
+      // ----------------------------------------------------
+      // RUTA POR DEFECTO / ERROR
+      // ----------------------------------------------------
       default:
         return MaterialPageRoute(
           builder: (_) => Scaffold(

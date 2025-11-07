@@ -1,21 +1,47 @@
+// Archivo: lib/features/search/presentation/widgets/professional_search_results.dart
+
 import 'package:alguiendijochamba_app_flutter/features/search/domain/entities/search_profesional_entity.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:easy_load_more/easy_load_more.dart'; 
+// 💡 Necesitas esta importación para usar PersistentNavBarNavigator
+import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart'; 
 
 import '../cubit/search_cubit.dart'; 
 import '../cubit/search_state.dart'; 
 import 'professional_card.dart'; 
 
+// --- WIDGET TEMPORAL (DEBE SER EL MISMO QUE USAS EN APP_ROUTER) ---
+// Asumimos que esta clase está disponible y espera un String.
+class ProfessionalDetailsPage extends StatelessWidget {
+  final String professionalId;
+  const ProfessionalDetailsPage({super.key, required this.professionalId});
+  
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Detalles del Profesional')),
+      body: Center(
+        child: Text('Cargando datos para el Profesional ID: $professionalId', style: const TextStyle(fontSize: 16)),
+      ),
+    );
+  }
+}
+// ------------------------------------------------------------------
+
 class ProfessionalSearchResults extends StatelessWidget {
   const ProfessionalSearchResults({super.key});
 
-  // 2. TIPO DE ARGUMENTO CORREGIDO
+  // 🚀 FUNCIÓN DE NAVEGACIÓN UNIFICADA
   void _navigateToProfile(BuildContext context, SearchedProfessionalEntity prof) {
-    // Usamos el ID para la navegación a la vista de perfil completo
-    Navigator.of(context).pushNamed(
-      '/process/${prof.professionalId}',
-      arguments: prof,
+    // Usamos el método de navegación del paquete PersistentNavBar para asegurar el push.
+    PersistentNavBarNavigator.pushNewScreen(
+      context,
+      screen: ProfessionalDetailsPage(
+        professionalId: prof.professionalId, // Pasa el ID (asumido como String)
+      ),
+      withNavBar: false, // Oculta la barra inferior en la nueva pantalla
+      pageTransitionAnimation: PageTransitionAnimation.cupertino,
     );
   }
 
@@ -46,7 +72,6 @@ class ProfessionalSearchResults extends StatelessWidget {
           );
         }
 
-        // Extracción segura de la lista
         final List<SearchedProfessionalEntity> professionals;
         final bool hasMore;
         final bool isLoadingMore = state is SearchLoadingMore;
@@ -90,15 +115,18 @@ class ProfessionalSearchResults extends StatelessWidget {
 
               final prof = professionals[index];
 
-              return InkWell(
-                onTap: () => _navigateToProfile(context, prof), 
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4.0),
                 child: ProfessionalCard( 
-                  // 3. ASIGNACIÓN DE CAMPOS CORREGIDA
+                  // ✅ LLAMADA A LA NAVEGACIÓN USANDO EL MÉTODO UNIFICADO
+                  onTap: () => _navigateToProfile(context, prof), 
+                  
+                  // ASIGNACIÓN DE CAMPOS
                   nombres: prof.userName ?? 'Profesional', 
                   apellidos: '', 
                   professionalLevel: prof.professionalLevel,
                   starRating: prof.starRating,
-                  availableBalance: prof.hourlyRate, // Usamos el campo de reputación
+                  availableBalance: prof.hourlyRate, 
                   fotoPerfilUrl: prof.profilePhotoUrl ?? '',
                 ),
               );
