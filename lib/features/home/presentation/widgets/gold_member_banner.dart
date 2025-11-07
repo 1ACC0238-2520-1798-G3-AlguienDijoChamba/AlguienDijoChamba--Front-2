@@ -1,5 +1,5 @@
 // Archivo sugerido: lib/features/home/presentation/widgets/_gold_member_banner.dart
-
+//aca va mi coso de plans
 import 'package:flutter/material.dart';
 
 class GoldMemberBanner extends StatelessWidget {

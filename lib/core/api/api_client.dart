@@ -42,7 +42,7 @@ class ApiClient {
     return headers;
   }
 
-  // POST mantiene el tipo de retorno Map, ya que se usa para login/registro que devuelven un objeto.
+  // POST mantiene el t192.168.18.5:o de retorno Map, ya que se usa para login/registro que devuelven un objeto.
   Future<Map<String, dynamic>> post(
     String endpoint, {
     Map<String, dynamic>? body,

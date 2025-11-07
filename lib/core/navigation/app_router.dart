@@ -10,6 +10,10 @@ import '../../features/auth/domain/usecases/login_user.dart';
 import '../../features/search/domain/usecases/search_professionals_usecase.dart';
 import '../../features/search/domain/usecases/get_all_tags_usecase.dart';
 import '../../features/search/presentation/pages/search_page.dart'; // Asegúrate de que la ruta de importación es correcta
+// Importaciones de Plans and Benefits
+import '../../features/plansbenefits/presentation/pages/plans_page.dart';
+import '../../features/plansbenefits/presentation/pages/how_to_level_page.dart';
+
 
 
 class AppRouter {
@@ -37,6 +41,7 @@ class AppRouter {
         );
       
       // 1. RUTA DE BÚSQUEDA (USADA POR PersistentBottomNavBar Y HomeHeader)
+
       case '/search_page': 
         return MaterialPageRoute(
           builder: (_) => SearchPage(
@@ -46,12 +51,19 @@ class AppRouter {
         );
         
       // 1. RUTA DE PLANES Y BENEFICIOS
+      // 1. RUTA DE PLANES Y BENEFICIOS
       case '/plans_and_benefits':
         return MaterialPageRoute(
-          // 🛑 Usamos PlaceholderScreen
-          builder: (_) => const PlaceholderScreen(title: 'Planes y Beneficios'), 
+          builder: (_) => const PlansPage(), // ✅ ahora apunta a tu pantalla real
         );
-      
+
+      // 2. Ruta adicional: cómo subir de nivel
+      case '/howToLevel':
+        return MaterialPageRoute(
+          builder: (_) => const HowToLevelPage(),
+        );
+
+            
       // 2. RUTA DE NOTIFICACIONES
       case '/notifications':
         return MaterialPageRoute(
