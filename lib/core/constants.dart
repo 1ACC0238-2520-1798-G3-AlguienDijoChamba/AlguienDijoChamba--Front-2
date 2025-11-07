@@ -16,4 +16,4 @@
 //    Nota: Tu dispositivo móvil debe estar conectado a la misma red Wi-Fi.
 
 
-const String BASE_URL = 'http://192.168.18.5:5000/api/v1';
+const String BASE_URL = 'http://10.0.2.2:5000/api/v1';
