@@ -1,35 +1,34 @@
-// lib/features/process/presentation/pages/payment_page.dart
-
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/professional.dart';
 import '../../domain/entities/job.dart';
+import '../../domain/repositories/process_repository.dart';
 import '../widgets/professional_header_widget.dart';
 import '../widgets/payment_transaction_item.dart';
 import 'payment_success_page.dart';
 
-
 class PaymentPage extends StatefulWidget {
   final Professional professional;
   final Job job;
+  final ProcessRepository repository;
 
   const PaymentPage({
     super.key,
     required this.professional,
     required this.job,
+    required this.repository,
   });
 
   @override
   State<PaymentPage> createState() => _PaymentPageState();
 }
 
-
 class _PaymentPageState extends State<PaymentPage> {
   @override
   Widget build(BuildContext context) {
     final double advancePayment = widget.job.totalCost / 2;
     final double totalAmount = widget.job.totalCost;
-    final double availableBalance = 1250.0; // Mock data
+    final double availableBalance = 1250.0;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
@@ -54,12 +53,8 @@ class _PaymentPageState extends State<PaymentPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Professional Header
             ProfessionalHeaderWidget(professional: widget.professional),
-            
             const SizedBox(height: 20),
-            
-            // Available Balance Card (azul con gradiente)
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(20),
@@ -79,10 +74,7 @@ class _PaymentPageState extends State<PaymentPage> {
                     children: [
                       const Text(
                         'Available Balance',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.white70,
-                        ),
+                        style: TextStyle(fontSize: 14, color: Colors.white70),
                       ),
                       const SizedBox(height: 8),
                       Text(
@@ -98,7 +90,6 @@ class _PaymentPageState extends State<PaymentPage> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      // ✨ ARREGLADO: withOpacity → withValues
                       color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -111,10 +102,7 @@ class _PaymentPageState extends State<PaymentPage> {
                 ],
               ),
             ),
-            
             const SizedBox(height: 24),
-            
-            // Payments Section
             const Text(
               'Payments',
               style: TextStyle(
@@ -124,8 +112,6 @@ class _PaymentPageState extends State<PaymentPage> {
               ),
             ),
             const SizedBox(height: 16),
-            
-            // Primera transacción (50% adelantado - completado)
             PaymentTransactionItem(
               isCompleted: true,
               title: 'Bank transfer withdrawal',
@@ -135,8 +121,6 @@ class _PaymentPageState extends State<PaymentPage> {
               buttonText: 'Pay',
               showButton: false,
             ),
-            
-            // Segunda transacción (50% pendiente - futuro)
             PaymentTransactionItem(
               isCompleted: false,
               title: 'Bank transfer withdrawal',
@@ -146,10 +130,7 @@ class _PaymentPageState extends State<PaymentPage> {
               buttonText: 'Pay Later',
               showButton: false,
             ),
-            
             const SizedBox(height: 16),
-            
-            // Pending and Total Earned Row
             Row(
               children: [
                 Expanded(
@@ -225,15 +206,12 @@ class _PaymentPageState extends State<PaymentPage> {
                 ),
               ],
             ),
-            
             const SizedBox(height: 24),
-            
-            // Pay Button
             SizedBox(
               width: double.infinity,
               height: 50,
               child: ElevatedButton(
-                onPressed: () => _processPaymentLocally(context, advancePayment),
+                onPressed: () => _processPaymentLocally(advancePayment),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF4169E1),
                   shape: RoundedRectangleBorder(
@@ -258,65 +236,98 @@ class _PaymentPageState extends State<PaymentPage> {
     );
   }
 
-  // ✨ ARREGLADO: BuildContext async gaps con mounted check
-  Future<void> _processPaymentLocally(
-    BuildContext context,
-    double amount,
-  ) async {
-    try {
-      // 1. Mostrar loading dialog
-      if (!mounted) return;
-      
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => const Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
-
-      // 2. Simular procesamiento (2 segundos)
-      await Future.delayed(const Duration(seconds: 2));
-
-      // 3. Cerrar loading dialog
-      if (!mounted) return;
-      Navigator.pop(context);
-
-      // 4. Mostrar snackbar de éxito
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('✅ Payment processed successfully!'),
-          backgroundColor: Colors.green,
-          duration: Duration(seconds: 2),
-        ),
-      );
-
-      // 5. Esperar y navegar a success page
-      await Future.delayed(const Duration(seconds: 2));
-
-      if (!mounted) return;
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => PaymentSuccessPage(
-            professional: widget.professional,
-            job: widget.job,
-            amount: amount,
-          ),
-        ),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      Navigator.pop(context);
-      
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+  Future<void> _processPaymentLocally(double amount) async {
+  try {
+    print('🔵 INICIO _processPaymentLocally');
+    
+    if (!mounted) {
+      print('❌ NOT MOUNTED 1');
+      return;
     }
+
+    // Mostrar diálogo de carga
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => const Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+    print('✅ Diálogo mostrado');
+
+    // Simular procesamiento de pago
+    await Future.delayed(const Duration(seconds: 2));
+    print('✅ Future.delayed completado');
+
+    if (!mounted) {
+      print('❌ NOT MOUNTED 2');
+      return;
+    }
+
+    // ✅ Cerrar el diálogo
+    print('🔄 Intentando cerrar diálogo...');
+    Navigator.of(context, rootNavigator: true).pop();
+    print('✅ Diálogo cerrado');
+
+    print('✅ Pago procesado exitosamente');
+
+    if (!mounted) {
+      print('❌ NOT MOUNTED 3');
+      return;
+    }
+
+    // Mostrar SnackBar
+    print('🔄 Mostrando SnackBar...');
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('✅ Payment processed successfully!'),
+        backgroundColor: Colors.green,
+        duration: Duration(seconds: 1),
+      ),
+    );
+    print('✅ SnackBar mostrado');
+
+    // Esperar MENOS tiempo
+    await Future.delayed(const Duration(seconds: 1));
+    print('✅ Segundo delay completado');
+
+    if (!mounted) {
+      print('❌ NOT MOUNTED 4');
+      return;
+    }
+
+    // Navegar a PaymentSuccessPage
+    print('🔄 Navegando a PaymentSuccessPage...');
+    await Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PaymentSuccessPage(
+          professional: widget.professional,
+          job: widget.job,
+          amount: amount,
+          repository: widget.repository,
+        ),
+      ),
+    );
+    print('✅ Navegación completada');
+  } catch (e, stackTrace) {
+    print('❌ ERROR COMPLETO: $e');
+    print('❌ STACKTRACE: $stackTrace');
+
+    if (!mounted) return;
+
+    // Cerrar diálogo si aún está abierto
+    try {
+      Navigator.of(context, rootNavigator: true).pop();
+      print('✅ Diálogo cerrado en catch');
+    } catch (e) {
+      print('⚠️ No se pudo cerrar diálogo: $e');
+    }
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+    );
   }
+}
 }

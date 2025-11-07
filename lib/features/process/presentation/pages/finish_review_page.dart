@@ -1,3 +1,4 @@
+import 'package:alguiendijochamba_app_flutter/features/process/domain/repositories/process_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/professional.dart';
@@ -12,11 +13,13 @@ import '../widgets/job_category_chip.dart';
 class FinishReviewPage extends StatefulWidget {
   final Professional professional;
   final Job job;
+  final ProcessRepository repository;  // ← AGREGAR ESTO
 
   const FinishReviewPage({
     Key? key,
     required this.professional,
     required this.job,
+    required this.repository,  // ← AGREGAR ESTO
   }) : super(key: key);
 
   @override

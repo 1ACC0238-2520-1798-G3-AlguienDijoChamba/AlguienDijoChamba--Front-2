@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../blocs/process_bloc.dart';
@@ -7,6 +6,7 @@ import '../blocs/process_state.dart';
 import '../widgets/professional_header_widget.dart';
 import 'request_job_page.dart';
 import '../../../../core/di/injector.dart';
+import '../../domain/repositories/process_repository.dart';  // ✨ NUEVO
 
 
 class ProfessionalDetailPage extends StatefulWidget {
@@ -19,8 +19,8 @@ class ProfessionalDetailPage extends StatefulWidget {
   State<ProfessionalDetailPage> createState() => _ProfessionalDetailPageState();
 }
 
+
 class _ProfessionalDetailPageState extends State<ProfessionalDetailPage> {
-  //aqui deberia estar la conexion con el backend
   @override
   void initState() {
     super.initState();
@@ -58,9 +58,9 @@ class _ProfessionalDetailPageState extends State<ProfessionalDetailPage> {
       body: BlocConsumer<ProcessBloc, ProcessState>(
         listener: (context, state) {
           if (state is ProcessError) {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text(state.message)));
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(state.message)),
+            );
           }
         },
         builder: (context, state) {
@@ -131,18 +131,27 @@ class _ProfessionalDetailPageState extends State<ProfessionalDetailPage> {
 
                   const SizedBox(height: 32),
 
-                  // ✨ Hire Now Button - CON BLOCPROVIDER CORREGIDO
+                  // ✨ ARREGLADO: Pasar ProcessRepository a RequestJobPage
                   SizedBox(
                     width: double.infinity,
                     height: 50,
                     child: ElevatedButton(
                       onPressed: () {
+                        final repository = injector<ProcessRepository>();  // ✨ OBTENER DEL INJECTOR
+                        
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => BlocProvider<ProcessBloc>.value(
-                              value: injector<ProcessBloc>(), // ✅ CORRECTO - No depende del context viejo
-                              child: RequestJobPage(professional: professional),
+                            builder: (context) => MultiBlocProvider(
+                              providers: [
+                                BlocProvider<ProcessBloc>.value(
+                                  value: injector<ProcessBloc>(),
+                                ),
+                              ],
+                              child: RequestJobPage(
+                                professional: professional,
+                                repository: repository,  // ✨ PASAR REPOSITORY
+                              ),
                             ),
                           ),
                         );

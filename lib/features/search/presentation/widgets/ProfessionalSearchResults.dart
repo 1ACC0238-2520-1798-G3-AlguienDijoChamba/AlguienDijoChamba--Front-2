@@ -5,9 +5,11 @@ import 'package:easy_load_more/easy_load_more.dart';
 // 💡 Necesitas esta importación para usar PersistentNavBarNavigator
 import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart'; 
 
+
 import '../cubit/search_cubit.dart'; 
 import '../cubit/search_state.dart'; 
 import 'professional_card.dart'; 
+
 
 // --- IMPORTACIONES PARA PROCESS FEATURE ---
 import 'package:alguiendijochamba_app_flutter/features/process/presentation/pages/professional_detail_page.dart';
@@ -16,25 +18,38 @@ import 'package:alguiendijochamba_app_flutter/core/di/injector.dart';
 import 'package:alguiendijochamba_app_flutter/features/process/presentation/blocs/process_bloc.dart';
 // ------------------------------------------------------------------
 
+
 class ProfessionalSearchResults extends StatelessWidget {
   const ProfessionalSearchResults({super.key});
 
+
   // 🚀 FUNCIÓN DE NAVEGACIÓN UNIFICADA
-void _navigateToProfile(BuildContext context, SearchedProfessionalEntity prof) {
-  PersistentNavBarNavigator.pushNewScreen(
-    context,
-    screen: BlocProvider<ProcessBloc>(
-      create: (_) => injector<ProcessBloc>(),
-      child: ProfessionalDetailPage(professionalId: prof.professionalId),
-    ),
-    withNavBar: false,
-    pageTransitionAnimation: PageTransitionAnimation.cupertino,
-  );
-}
+  void _navigateToProfile(BuildContext context, SearchedProfessionalEntity prof) {
+    PersistentNavBarNavigator.pushNewScreen(
+      context,
+      screen: BlocProvider<ProcessBloc>(
+        create: (_) => injector<ProcessBloc>(),
+        child: ProfessionalDetailPage(professionalId: prof.professionalId),
+      ),
+      withNavBar: false,
+      pageTransitionAnimation: PageTransitionAnimation.cupertino,
+    );
+  }
+
+  // ✅ FUNCIÓN AUXILIAR PARA FILTRAR IDS INVÁLIDOS
+  List<SearchedProfessionalEntity> _filterValidProfessionals(List<SearchedProfessionalEntity> professionals) {
+    return professionals.where((p) => 
+      p.professionalId != null && 
+      p.professionalId.isNotEmpty && 
+      p.professionalId != '00000000-0000-0000-0000-000000000000'
+    ).toList();
+  }
+
 
   @override
   Widget build(BuildContext context) {
     final searchCubit = context.read<SearchCubit>();
+
 
     return BlocBuilder<SearchCubit, SearchState>(
       builder: (context, state) {
@@ -59,15 +74,19 @@ void _navigateToProfile(BuildContext context, SearchedProfessionalEntity prof) {
           );
         }
 
+
         final List<SearchedProfessionalEntity> professionals;
         final bool hasMore;
         final bool isLoadingMore = state is SearchLoadingMore;
 
+
         if (state is SearchLoaded) {
-            professionals = state.professionals;
+            // ✅ FILTRAR PROFESIONALES CON IDS VÁLIDOS
+            professionals = _filterValidProfessionals(state.professionals);
             hasMore = state.hasMore;
         } else if (state is SearchLoadingMore) {
-            professionals = state.professionals;
+            // ✅ FILTRAR PROFESIONALES CON IDS VÁLIDOS
+            professionals = _filterValidProfessionals(state.professionals);
             hasMore = state.hasMore;
         } else {
             professionals = [];
@@ -79,6 +98,7 @@ void _navigateToProfile(BuildContext context, SearchedProfessionalEntity prof) {
             child: Text("No se encontraron profesionales con los filtros seleccionados."),
           );
         }
+
 
         // Renderizar la lista con Paginación
         return EasyLoadMore(
@@ -100,7 +120,9 @@ void _navigateToProfile(BuildContext context, SearchedProfessionalEntity prof) {
                 );
               }
 
+
               final prof = professionals[index];
+
 
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 4.0),

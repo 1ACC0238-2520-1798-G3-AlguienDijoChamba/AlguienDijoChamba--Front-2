@@ -1,116 +1,102 @@
-// lib/features/process/data/datasources/process_remote_data_source.dart
-
 import 'package:alguiendijochamba_app_flutter/core/api/api_client.dart';
-import '../models/professional_model.dart';
 import '../models/job_model.dart';
-import '../models/payment_model.dart';
+import '../models/professional_model.dart';
+
 
 class ProcessRemoteDataSource {
   final ApiClient apiClient;
 
+
   ProcessRemoteDataSource({required this.apiClient});
 
-  /// Obtener detalles del profesional por ID
-  /// GET /professionals/{id}
-  Future<ProfessionalModel> getProfessionalById(String id) async {
+
+  Future<ProfessionalModel> getProfessionalById(String professionalId) async {
+    final response = await apiClient.get('/professionals/$professionalId', requiresAuth: true);
+    return ProfessionalModel.fromJson(response);
+  }
+
+
+  Future<JobModel> createJobRequest(Map<String, dynamic> params) async {
+    final response = await apiClient.post(
+      '/jobs/request',
+      body: params,
+      requiresAuth: true,
+    );
+    return JobModel.fromJson(response);
+  }
+
+
+  Future<List<JobModel>> getAvailableJobs() async {
+    final response = await apiClient.get('/jobs/available', requiresAuth: true);
+    if (response is List) {
+      return response.map((job) => JobModel.fromJson(job as Map<String, dynamic>)).toList();
+    }
+    return [];
+  }
+
+
+  Future<JobModel> saveActiveJob(Map<String, dynamic> jobData) async {
+    final response = await apiClient.post(
+      '/jobs/active',
+      body: jobData,
+      requiresAuth: true,
+    );
+    return JobModel.fromJson(response);
+  }
+
+
+  Future<JobModel?> getActiveJob(String clientId) async {
     try {
-      print('🔵 FETCH: Obteniendo profesional con ID: $id');
-      
       final response = await apiClient.get(
-        '/professionals/$id',  // ✅ SIN /api/v1
+        '/jobs/active/customer/$clientId',
         requiresAuth: true,
       );
-      
-      print('✅ RESPONSE RECIBIDA: $response');
-      
-      final model = ProfessionalModel.fromJson(response as Map<String, dynamic>);
-      print('✅ MODELO MAPEADO: ${model.fullName}');
-      
-      return model;
+      if (response == null) return null;
+      return JobModel.fromJson(response);
     } catch (e) {
-      print('❌ ERROR FETCH: $e');
-      print('❌ Stack trace: ${StackTrace.current}');
-      throw Exception('Failed to fetch professional: $e');
+      return null;
     }
   }
 
-  /// Crear solicitud de trabajo
-  /// POST /jobs/request
-  Future<JobModel> createJobRequest(Map<String, dynamic> jobData) async {
-    try {
-      final response = await apiClient.post(
-        '/jobs/request',  // ✅ SIN /api/v1
-        body: jobData,
-        requiresAuth: true,
-      );
-      return JobModel.fromJson(response as Map<String, dynamic>);
-    } catch (e) {
-      throw Exception('Failed to create job request: $e');
-    }
+
+  Future<void> updateJobStatus(String jobId, String status) async {
+    await apiClient.patch(
+      '/jobs/$jobId/status',
+      body: {'status': status},
+      requiresAuth: true,
+    );
   }
 
-  /// Procesar pago
-  /// POST /payments/process
-  Future<PaymentModel> processPayment(Map<String, dynamic> paymentData) async {
-    try {
-      final response = await apiClient.post(
-        '/payments/process',  // ✅ SIN /api/v1
-        body: paymentData,
-        requiresAuth: true,
-      );
-      return PaymentModel.fromJson(response as Map<String, dynamic>);
-    } catch (e) {
-      throw Exception('Failed to process payment: $e');
-    }
+
+  Future<JobModel> getJobById(String jobId) async {
+    final response = await apiClient.get(
+      '/jobs/$jobId',
+      requiresAuth: true,
+    );
+    return JobModel.fromJson(response);
   }
 
-  /// Completar trabajo (enviar review)
-  /// POST /reputation/initial
-  Future<void> completeJob(
-    String jobId,
-    int rating,
-    String review,
-  ) async {
-    try {
-      await apiClient.post(
-        '/reputation/initial',  // ✅ SIN /api/v1
-        body: {
-          'jobId': jobId,
-          'rating': rating,
-          'review': review,
-        },
-        requiresAuth: true,
-      );
-    } catch (e) {
-      throw Exception('Failed to complete job: $e');
-    }
+
+  Future<void> completeJob(String jobId, int rating, String review) async {
+    await apiClient.post(
+      '/reputation/initial',
+      body: {
+        'jobId': jobId,
+        'rating': rating,
+        'review': review,
+      },
+      requiresAuth: true,
+    );
   }
 
-  /// Cancelar trabajo
-  /// POST /jobs/{jobId}/cancel
+
+  // ✅ CORREGIDO: Cambiar de /cancel a /status con PATCH
   Future<void> cancelJob(String jobId, String reason) async {
-    try {
-      await apiClient.post(
-        '/jobs/$jobId/cancel',  // ✅ SIN /api/v1
-        body: {'reason': reason},
-        requiresAuth: true,
-      );
-    } catch (e) {
-      throw Exception('Failed to cancel job: $e');
-    }
-  }
-
-  /// Obtener balance disponible (opcional)
-  /// GET /payments/balance
-  Future<Map<String, dynamic>> getAvailableBalance() async {
-    try {
-      final response = await apiClient.get(
-        '/payments/balance',  // ✅ SIN /api/v1
-        requiresAuth: true,
-      );
-      return response as Map<String, dynamic>;
-    } catch (e) {
-      throw Exception('Failed to fetch balance: $e');
-    }
+    print('🔧 API CLIENT: Cancelando job $jobId con PATCH a /status');
+    await apiClient.patch(
+      '/jobs/$jobId/status',
+      body: {'status': 'Cancelled'},
+      requiresAuth: true,
+    );
   }
 }

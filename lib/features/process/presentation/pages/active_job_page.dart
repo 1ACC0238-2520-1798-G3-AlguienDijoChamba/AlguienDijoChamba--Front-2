@@ -1,6 +1,10 @@
+import 'package:alguiendijochamba_app_flutter/core/di/injector.dart';
+import 'package:alguiendijochamba_app_flutter/features/process/domain/repositories/process_repository.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/professional.dart';
 import '../../domain/entities/job.dart';
+import '../blocs/process_bloc.dart';
 import '../widgets/professional_header_widget.dart';
 import 'finish_review_page.dart';
 import 'cancel_job_page.dart';
@@ -8,219 +12,243 @@ import 'cancel_job_page.dart';
 class ActiveJobPage extends StatelessWidget {
   final Professional professional;
   final Job job;
+  final ProcessRepository repository;
 
   const ActiveJobPage({
-    Key? key,
+    super.key,
     required this.professional,
     required this.job,
-  }) : super(key: key);
+    required this.repository,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF212121)),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'Process',
-          style: TextStyle(
-            color: Color(0xFF212121),
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
+    return BlocProvider.value(
+      value: injector<ProcessBloc>(),
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF5F5F5),
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Color(0xFF212121)),
+            onPressed: () => Navigator.pop(context),
+          ),
+          title: const Text(
+            'Process',
+            style: TextStyle(
+              color: Color(0xFF212121),
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Professional Header
-            ProfessionalHeaderWidget(professional: professional),
-            
-            const SizedBox(height: 24),
-            
-            // Description Section
-            const Text(
-              'Description',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF212121),
-              ),
-            ),
-            const SizedBox(height: 16),
-            
-            // Address
-            _buildInfoRow(
-              Icons.location_on,
-              job.address,
-            ),
-            const SizedBox(height: 16),
-            
-            // Hour
-            _buildInfoRow(
-              Icons.access_time,
-              job.scheduledHour,
-            ),
-            const SizedBox(height: 16),
-            
-            // Date
-            _buildInfoRow(
-              Icons.calendar_today,
-              _formatDate(job.scheduledDate),
-            ),
-            
-            const SizedBox(height: 24),
-            
-            // Message Section
-            const Text(
-              'Message',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF212121),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                job.additionalMessage.isEmpty
-                    ? 'No additional message'
-                    : job.additionalMessage,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Color(0xFF757575),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ProfessionalHeaderWidget(professional: professional),
+              const SizedBox(height: 24),
+              const Text(
+                'Description',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF212121),
                 ),
               ),
-            ),
-            
-            const SizedBox(height: 32),
-            
-            // Action Buttons
-            Row(
-              children: [
-                Expanded(
-                  child: SizedBox(
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => FinishReviewPage(
-                              professional: professional,
-                              job: job,
-                            ),
+              const SizedBox(height: 16),
+              _buildInfoRow(Icons.location_on, job.address),
+              const SizedBox(height: 16),
+              _buildInfoRow(Icons.access_time, job.scheduledHour),
+              const SizedBox(height: 16),
+              _buildInfoRow(Icons.calendar_today, _formatDate(job.scheduledDate)),
+              const SizedBox(height: 24),
+              const Text(
+                'Message',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF212121),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  job.additionalMessage?.isEmpty ?? true
+                      ? 'No additional message'
+                      : job.additionalMessage!,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFF757575),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 32),
+              Row(
+                children: [
+                  Expanded(
+                    child: SizedBox(
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: () => _finishJobWithBackend(context),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF4169E1),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF4169E1),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          elevation: 0,
                         ),
-                        elevation: 0,
-                      ),
-                      child: const Text(
-                        'Finish Job',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
+                        child: const Text(
+                          'Finish Job',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: SizedBox(
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => CancelJobPage(
-                              professional: professional,
-                              job: job,
-                            ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: SizedBox(
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: () => _cancelJobWithBackend(context),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF4169E1),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF4169E1),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          elevation: 0,
                         ),
-                        elevation: 0,
-                      ),
-                      child: const Text(
-                        'Cancel Job',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
+                        child: const Text(
+                          'Cancel Job',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-          ],
+                ],
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildInfoRow(IconData icon, String text) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            icon,
-            color: const Color(0xFF757575),
-            size: 20,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              text,
-              style: const TextStyle(
-                fontSize: 14,
-                color: Color(0xFF424242),
+  Future<void> _finishJobWithBackend(BuildContext context) async {
+    try {
+      print('🔵 INICIO Finish Job');
+
+      final result = await repository.updateJobStatus(job.id, 'Completed');
+
+      result.fold(
+        (failure) {
+          print('❌ Error Finish Job: $failure');
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Error: ${failure.toString()}')),
+            );
+          }
+        },
+        (_) {
+          print('✅ Job Completado');
+          if (context.mounted) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => FinishReviewPage(
+                  professional: professional,
+                  job: job,
+                  repository: repository,
+                ),
+              ),
+            );
+          }
+        },
+      );
+    } catch (e) {
+      print('❌ Exception Finish Job: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _cancelJobWithBackend(BuildContext context) async {
+    try {
+      print('🔵 INICIO Cancel Job - Navegando directamente a Screen 7');
+      print('🔍 Job ID: ${job.id}');
+      print('🔍 Professional ID: ${professional.id}');
+
+      if (context.mounted) {
+        print('🔄 Navegando a CancelJobPage sin modal');
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => BlocProvider.value(
+              value: injector<ProcessBloc>(),
+              child: CancelJobPage(
+                professional: professional,
+                job: job,
               ),
             ),
           ),
-        ],
-      ),
+        );
+      }
+    } catch (e) {
+      print('❌ Exception Cancel Job: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Widget _buildInfoRow(IconData icon, String text) {
+    return Row(
+      children: [
+        Icon(icon, color: const Color(0xFF4169E1), size: 24),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            text,
+            style: const TextStyle(
+              fontSize: 14,
+              color: Color(0xFF757575),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
   String _formatDate(DateTime date) {
     final days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-    final months = ['January', 'February', 'March', 'April', 'May', 'June', 
-                    'July', 'August', 'September', 'October', 'November', 'December'];
-    
+    final months = ['January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'];
+
     return '${days[date.weekday - 1]}, ${date.day} ${months[date.month - 1]} ${date.year}';
   }
 }

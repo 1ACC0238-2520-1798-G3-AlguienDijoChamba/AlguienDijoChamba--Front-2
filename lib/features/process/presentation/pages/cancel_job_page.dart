@@ -1,3 +1,4 @@
+import 'package:alguiendijochamba_app_flutter/core/di/injector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/professional.dart';
@@ -8,6 +9,7 @@ import '../blocs/process_state.dart';
 import '../widgets/professional_header_widget.dart';
 import '../widgets/report_reason_button.dart';
 import '../widgets/payment_transaction_item.dart';
+
 
 class CancelJobPage extends StatefulWidget {
   final Professional professional;
@@ -23,6 +25,7 @@ class CancelJobPage extends StatefulWidget {
   State<CancelJobPage> createState() => _CancelJobPageState();
 }
 
+
 class _CancelJobPageState extends State<CancelJobPage> {
   String? _selectedReason;
 
@@ -35,8 +38,8 @@ class _CancelJobPageState extends State<CancelJobPage> {
 
   @override
   Widget build(BuildContext context) {
-    final double refundAmount = widget.job.totalCost / 2 * 0.5; // 90% de lo adelantado
-    final double pendingRefund = widget.job.totalCost / 2 * 0.5; // 10% en espera
+    final double refundAmount = widget.job.totalCost / 2 * 0.9;
+    final double pendingRefund = widget.job.totalCost / 2 * 0.1;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
@@ -48,7 +51,7 @@ class _CancelJobPageState extends State<CancelJobPage> {
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
-          'Process',
+          'Cancel Job',
           style: TextStyle(
             color: Color(0xFF212121),
             fontSize: 18,
@@ -58,14 +61,28 @@ class _CancelJobPageState extends State<CancelJobPage> {
       ),
       body: BlocListener<ProcessBloc, ProcessState>(
         listener: (context, state) {
+          print('🔍 CancelJobPage - Estado: $state');
+          
           if (state is JobCancelled) {
+            print('✅ Job Cancelado exitosamente');
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Job cancelled successfully')),
+              const SnackBar(
+                content: Text('Job cancelled successfully'),
+                backgroundColor: Color(0xFF4CAF50),
+              ),
             );
-            Navigator.popUntil(context, (route) => route.isFirst);
+            Future.delayed(const Duration(milliseconds: 500), () {
+              if (mounted) {
+                Navigator.popUntil(context, (route) => route.isFirst);
+              }
+            });
           } else if (state is ProcessError) {
+            print('❌ Error: ${state.message}');
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message)),
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: Colors.red,
+              ),
             );
           }
         },
@@ -74,12 +91,9 @@ class _CancelJobPageState extends State<CancelJobPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Professional Header
               ProfessionalHeaderWidget(professional: widget.professional),
-              
               const SizedBox(height: 24),
               
-              // Report Section
               const Text(
                 'Report',
                 style: TextStyle(
@@ -90,7 +104,6 @@ class _CancelJobPageState extends State<CancelJobPage> {
               ),
               const SizedBox(height: 16),
               
-              // Cancellation Reason Buttons
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
@@ -109,7 +122,6 @@ class _CancelJobPageState extends State<CancelJobPage> {
               
               const SizedBox(height: 24),
               
-              // Payments Section
               const Text(
                 'Payments',
                 style: TextStyle(
@@ -120,7 +132,6 @@ class _CancelJobPageState extends State<CancelJobPage> {
               ),
               const SizedBox(height: 16),
               
-              // Primera transacción (reembolso procesado - flecha roja)
               PaymentTransactionItem(
                 isCompleted: true,
                 title: 'Bank transfer withdrawal',
@@ -131,7 +142,6 @@ class _CancelJobPageState extends State<CancelJobPage> {
                 showButton: true,
               ),
               
-              // Segunda transacción (reembolso pendiente - flecha azul)
               PaymentTransactionItem(
                 isCompleted: false,
                 title: 'Bank transfer withdrawal',
@@ -144,7 +154,6 @@ class _CancelJobPageState extends State<CancelJobPage> {
               
               const SizedBox(height: 24),
               
-              // Finish Job and Refund Button
               SizedBox(
                 width: double.infinity,
                 height: 50,
@@ -154,12 +163,11 @@ class _CancelJobPageState extends State<CancelJobPage> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text('Please select a cancellation reason'),
+                          backgroundColor: Color(0xFFE53935),
                         ),
                       );
                       return;
                     }
-                    
-                    // Mostrar diálogo de confirmación
                     _showCancellationConfirmation(context);
                   },
                   style: ElevatedButton.styleFrom(
@@ -190,52 +198,123 @@ class _CancelJobPageState extends State<CancelJobPage> {
   void _showCancellationConfirmation(BuildContext context) {
     showDialog(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Confirm Cancellation'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Are you sure you want to cancel this job?',
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Reason: $_selectedReason',
-                style: const TextStyle(
-                  fontStyle: FontStyle.italic,
-                  color: Color(0xFF757575),
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                )
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Confirm Cancellation',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF212121),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                'You will receive a refund shortly.',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Color(0xFF9E9E9E),
+                const SizedBox(height: 16),
+                const Text(
+                  'Are you sure you want to cancel this job?',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFF757575),
+                    height: 1.5,
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF5F5F5),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    'Reason: $_selectedReason',
+                    style: const TextStyle(
+                      fontStyle: FontStyle.italic,
+                      color: Color(0xFF4169E1),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'You will receive a refund shortly.',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF9E9E9E),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pop(dialogContext),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFF5F5F5),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        child: const Text(
+                          'Keep Job',
+                          style: TextStyle(
+                            color: Color(0xFF212121),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(dialogContext);
+                          print('🔴 Enviando CancelActiveJob desde confirmación');
+                          context.read<ProcessBloc>().add(
+                            CancelActiveJob(widget.job.id, _selectedReason ?? ''),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFE53935),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        child: const Text(
+                          'Cancel Job',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Keep Job'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                context.read<ProcessBloc>().add(
-                  CancelActiveJob(widget.job.id, _selectedReason ?? ''),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFE53935),
-              ),
-              child: const Text('Cancel Job'),
-            ),
-          ],
         );
       },
     );

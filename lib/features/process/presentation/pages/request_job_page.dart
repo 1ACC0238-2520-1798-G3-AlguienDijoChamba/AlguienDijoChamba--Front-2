@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/professional.dart';
-import '../../../../core/di/injector.dart';
+import '../../domain/repositories/process_repository.dart';
 import '../blocs/process_bloc.dart';
 import '../blocs/process_event.dart';
 import '../blocs/process_state.dart';
@@ -9,28 +9,29 @@ import '../widgets/professional_header_widget.dart';
 import '../widgets/job_category_chip.dart';
 import 'payment_page.dart';
 
-
 class RequestJobPage extends StatefulWidget {
   final Professional professional;
+  final ProcessRepository repository;
 
   const RequestJobPage({
     Key? key,
     required this.professional,
+    required this.repository,
   }) : super(key: key);
 
   @override
   State<RequestJobPage> createState() => _RequestJobPageState();
 }
 
-
 class _RequestJobPageState extends State<RequestJobPage> {
   final _addressController = TextEditingController();
   final _hourController = TextEditingController();
   final _dateController = TextEditingController();
   final _messageController = TextEditingController();
-  
+
   String _selectedPaymentMethod = 'Credit/Debit Card';
   final List<String> _selectedCategories = ['High Priority'];
+  DateTime? _selectedDate;
 
   final List<Map<String, dynamic>> _categories = [
     {'label': 'High Priority', 'color': const Color(0xFFB2DFDB)},
@@ -41,6 +42,10 @@ class _RequestJobPageState extends State<RequestJobPage> {
 
   @override
   Widget build(BuildContext context) {
+    print('🔍 DEBUG Professional Data:');
+    print('   - ID: ${widget.professional.id}');
+    print('   - Name: ${widget.professional.fullName}');
+    print('   - Specialty: ${widget.professional.specialties}');
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
@@ -59,27 +64,23 @@ class _RequestJobPageState extends State<RequestJobPage> {
           ),
         ),
       ),
-      // ✨ CAMBIO: Usar BlocConsumer en lugar de BlocListener
       body: BlocConsumer<ProcessBloc, ProcessState>(
         listener: (context, state) {
           if (state is JobCreated) {
-            // ✨ ARREGLADO: Usar injector en lugar de context.read()
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => BlocProvider<ProcessBloc>.value(
-                  value: injector<ProcessBloc>(),
-                  child: PaymentPage(
-                    professional: widget.professional,
-                    job: state.job,
-                  ),
+                builder: (context) => PaymentPage(
+                  professional: widget.professional,
+                  job: state.job,
+                  repository: widget.repository,
                 ),
               ),
             );
           } else if (state is ProcessError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message)),
-            );
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(state.message)));
           }
         },
         builder: (context, state) {
@@ -88,12 +89,10 @@ class _RequestJobPageState extends State<RequestJobPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Professional Header with hourly rate
                 _buildProfessionalHeaderWithRate(),
-                
+
                 const SizedBox(height: 24),
-                
-                // Job Categories
+
                 const Text(
                   'Job',
                   style: TextStyle(
@@ -107,39 +106,51 @@ class _RequestJobPageState extends State<RequestJobPage> {
                   spacing: 8,
                   runSpacing: 8,
                   children: [
-                    ..._categories.map((category) => JobCategoryChip(
-                          label: category['label'],
-                          backgroundColor: category['color'],
-                          isSelected: _selectedCategories.contains(category['label']),
-                          onTap: () {
-                            setState(() {
-                              if (_selectedCategories.contains(category['label'])) {
-                                _selectedCategories.remove(category['label']);
-                              } else {
-                                _selectedCategories.add(category['label']);
-                              }
-                            });
-                          },
-                        )),
+                    ..._categories.map(
+                      (category) => JobCategoryChip(
+                        label: category['label'],
+                        backgroundColor: category['color'],
+                        isSelected: _selectedCategories.contains(
+                          category['label'],
+                        ),
+                        onTap: () {
+                          setState(() {
+                            if (_selectedCategories.contains(
+                              category['label'],
+                            )) {
+                              _selectedCategories.remove(category['label']);
+                            } else {
+                              _selectedCategories.add(category['label']);
+                            }
+                          });
+                        },
+                      ),
+                    ),
                     GestureDetector(
                       onTap: () {
                         // Add more categories logic
                       },
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFF4169E1),
                           borderRadius: BorderRadius.circular(20),
                         ),
-                        child: const Icon(Icons.add, color: Colors.white, size: 20),
+                        child: const Icon(
+                          Icons.add,
+                          color: Colors.white,
+                          size: 20,
+                        ),
                       ),
                     ),
                   ],
                 ),
-                
+
                 const SizedBox(height: 24),
-                
-                // Payment Method
+
                 const Text(
                   'Payment Method',
                   style: TextStyle(
@@ -168,22 +179,22 @@ class _RequestJobPageState extends State<RequestJobPage> {
                     ),
                   ],
                 ),
-                
+
                 const SizedBox(height: 24),
-                
-                // Address
-                _buildTextField('Address', Icons.location_on, _addressController),
+
+                _buildTextField(
+                  'Address',
+                  Icons.location_on,
+                  _addressController,
+                ),
                 const SizedBox(height: 16),
-                
-                // Hour
+
                 _buildTextField('Hour', Icons.access_time, _hourController),
                 const SizedBox(height: 16),
-                
-                // ✨ CAMBIO: Date con Calendario
+
                 _buildDatePickerField(),
                 const SizedBox(height: 16),
-                
-                // Message
+
                 const Text(
                   'Message',
                   style: TextStyle(
@@ -206,10 +217,9 @@ class _RequestJobPageState extends State<RequestJobPage> {
                     ),
                   ),
                 ),
-                
+
                 const SizedBox(height: 32),
-                
-                // Request Job Button
+
                 SizedBox(
                   width: double.infinity,
                   height: 50,
@@ -270,10 +280,7 @@ class _RequestJobPageState extends State<RequestJobPage> {
                 ),
                 const Text(
                   'Starting rate',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF757575),
-                  ),
+                  style: TextStyle(fontSize: 12, color: Color(0xFF757575)),
                 ),
               ],
             ),
@@ -304,7 +311,9 @@ class _RequestJobPageState extends State<RequestJobPage> {
             Icon(
               icon,
               size: 32,
-              color: isSelected ? const Color(0xFF4169E1) : const Color(0xFF757575),
+              color: isSelected
+                  ? const Color(0xFF4169E1)
+                  : const Color(0xFF757575),
             ),
             const SizedBox(height: 8),
             Text(
@@ -312,7 +321,9 @@ class _RequestJobPageState extends State<RequestJobPage> {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 12,
-                color: isSelected ? const Color(0xFF4169E1) : const Color(0xFF757575),
+                color: isSelected
+                    ? const Color(0xFF4169E1)
+                    : const Color(0xFF757575),
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               ),
             ),
@@ -322,7 +333,11 @@ class _RequestJobPageState extends State<RequestJobPage> {
     );
   }
 
-  Widget _buildTextField(String label, IconData icon, TextEditingController controller) {
+  Widget _buildTextField(
+    String label,
+    IconData icon,
+    TextEditingController controller,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -352,7 +367,6 @@ class _RequestJobPageState extends State<RequestJobPage> {
     );
   }
 
-  // ✨ NUEVO: Widget para DatePicker con Calendario
   Widget _buildDatePickerField() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -376,7 +390,9 @@ class _RequestJobPageState extends State<RequestJobPage> {
             );
             if (picked != null) {
               setState(() {
-                _dateController.text = "${picked.day}/${picked.month}/${picked.year}";
+                _selectedDate = picked;
+                _dateController.text =
+                    "${picked.day}/${picked.month}/${picked.year}";
               });
             }
           },
@@ -385,7 +401,10 @@ class _RequestJobPageState extends State<RequestJobPage> {
             enabled: false,
             decoration: InputDecoration(
               hintText: 'Select a date',
-              prefixIcon: const Icon(Icons.calendar_today, color: Color(0xFF757575)),
+              prefixIcon: const Icon(
+                Icons.calendar_today,
+                color: Color(0xFF757575),
+              ),
               filled: true,
               fillColor: Colors.white,
               border: OutlineInputBorder(
@@ -400,10 +419,9 @@ class _RequestJobPageState extends State<RequestJobPage> {
   }
 
   void _submitJobRequest() {
-    // Validate fields
     if (_addressController.text.isEmpty ||
         _hourController.text.isEmpty ||
-        _dateController.text.isEmpty ||
+        _selectedDate == null ||
         _selectedCategories.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please fill all required fields')),
@@ -411,19 +429,38 @@ class _RequestJobPageState extends State<RequestJobPage> {
       return;
     }
 
-    // Create job request
+    // ✨ DEBUG
+    print('🔍 Professional ID Type: ${widget.professional.id.runtimeType}');
+    print('🔍 Professional ID Value: ${widget.professional.id}');
+    print(
+      '🔍 Professional ID isEmpty: ${widget.professional.id.toString().isEmpty}',
+    );
+
+    final scheduledDateTime = DateTime(
+      _selectedDate!.year,
+      _selectedDate!.month,
+      _selectedDate!.day,
+      int.parse(_hourController.text.split(':')[0]),
+      int.parse(_hourController.text.split(':')[1]),
+    );
+
     final jobData = {
-      'professionalId': widget.professional.id,
-      'customerId': 'customer_123', // TODO: Get from auth
+      'professionalId': widget.professional.id.toString(), // ✨ FUERZA A STRING
+      'customerId': widget.professional.id.toString(),
+      'specialty': widget.professional.specialties?.isNotEmpty == true
+          ? widget.professional.specialties!.first
+          : 'General',
+      'description': _selectedCategories.join(', '),
       'address': _addressController.text,
-      'scheduledDate': DateTime.now().add(const Duration(days: 1)).toIso8601String(),
+      'scheduledDate': scheduledDateTime.toIso8601String(),
       'scheduledHour': _hourController.text,
       'categories': _selectedCategories,
       'paymentMethod': _selectedPaymentMethod,
       'additionalMessage': _messageController.text,
-      'totalCost': widget.professional.hourlyRate * 2, // Example: 2 hours
+      'totalCost': widget.professional.hourlyRate * 2,
     };
 
+    print('📊 JOB DATA: $jobData');
     context.read<ProcessBloc>().add(CreateJob(jobData));
   }
 
