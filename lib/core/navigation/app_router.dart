@@ -1,14 +1,29 @@
+// Archivo: AppRouter.dart (CORREGIDO)
+
+import 'package:alguiendijochamba_app_flutter/features/shared/widgets/placeholder_screen.dart';
 import 'package:flutter/material.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/domain/usecases/register_user.dart';
 import '../../features/auth/domain/usecases/login_user.dart';
+// Importaciones de Search
+import '../../features/search/domain/usecases/search_professionals_usecase.dart';
+import '../../features/search/domain/usecases/get_all_tags_usecase.dart';
+import '../../features/search/presentation/pages/search_page.dart'; // Asegúrate de que la ruta de importación es correcta
+
 
 class AppRouter {
   final RegisterUser registerUser;
   final LoginUser loginUser;
+  final SearchProfessionalsUseCase searchProfessionalsUseCase;
+  final GetAllTagsUseCase getAllTagsUseCase;
 
-  AppRouter({required this.registerUser, required this.loginUser});
+  AppRouter({
+    required this.registerUser, 
+    required this.loginUser,
+    required this.searchProfessionalsUseCase,
+    required this.getAllTagsUseCase,
+  });
 
   Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -19,6 +34,43 @@ class AppRouter {
       case '/login':
         return MaterialPageRoute(
           builder: (_) => LoginPage(loginUser: loginUser),
+        );
+      
+      // 1. RUTA DE BÚSQUEDA (USADA POR PersistentBottomNavBar Y HomeHeader)
+      case '/search_page': 
+        return MaterialPageRoute(
+          builder: (_) => SearchPage(
+            searchUseCase: searchProfessionalsUseCase,
+            getAllTagsUseCase: getAllTagsUseCase,
+          ),
+        );
+        
+      // 1. RUTA DE PLANES Y BENEFICIOS
+      case '/plans_and_benefits':
+        return MaterialPageRoute(
+          // 🛑 Usamos PlaceholderScreen
+          builder: (_) => const PlaceholderScreen(title: 'Planes y Beneficios'), 
+        );
+      
+      // 2. RUTA DE NOTIFICACIONES
+      case '/notifications':
+        return MaterialPageRoute(
+          // 🛑 Usamos PlaceholderScreen
+          builder: (_) => const PlaceholderScreen(title: 'Notificaciones'),
+        );
+
+      // 3. RUTA DE CHAT
+      case '/chat':
+        return MaterialPageRoute(
+          // 🛑 Usamos PlaceholderScreen
+          builder: (_) => const PlaceholderScreen(title: 'Chat'),
+        );
+
+      // 4. RUTA DE PERFIL (VERSIÓN FULLSCREEN)
+      case '/profile_page_full':
+        return MaterialPageRoute(
+          // 🛑 Usamos PlaceholderScreen
+          builder: (_) => const PlaceholderScreen(title: 'Mi Perfil'),
         );
         
       default:

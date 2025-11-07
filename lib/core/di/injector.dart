@@ -16,6 +16,8 @@ import 'package:alguiendijochamba_app_flutter/features/search/domain/repositorie
 import 'package:alguiendijochamba_app_flutter/features/search/domain/usecases/get_all_tags_usecase.dart';
 import 'package:alguiendijochamba_app_flutter/features/search/domain/usecases/get_my_profile_usercase.dart';
 import 'package:alguiendijochamba_app_flutter/features/search/domain/usecases/search_professionals_usecase.dart';
+import 'package:alguiendijochamba_app_flutter/features/search/presentation/cubit/search_cubit.dart';
+import 'package:alguiendijochamba_app_flutter/features/search/presentation/cubit/tag_filter_cubit.dart';
 
 // 1. Almacenamiento de Tokens
 final TokenStorage tokenStorage = TokenStorageImpl();
@@ -26,19 +28,18 @@ final ApiClient apiClient = ApiClient(
     tokenStorage: tokenStorage, 
 );
 
+// AUTH
 final AuthRemoteDataSource authRemoteDataSource = AuthRemoteDataSource(apiClient: apiClient);
-// 🔑 CORRECCIÓN CLAVE: Pasarle tokenStorage al repositorio de Auth.
-// Esto es necesario porque el repositorio ahora guarda el token en el login.
 final AuthRepository authRepository = AuthRepositoryImpl(
     remoteDataSource: authRemoteDataSource,
-    tokenStorage: tokenStorage, // <<-- ¡Línea agregada!
+    tokenStorage: tokenStorage, 
 );
 final LoginUser loginUserUseCase = LoginUser(authRepository); 
 final RegisterUser registerUserUseCase = RegisterUser(authRepository);
 
 
 
-// BÚSQUEDA / PROFESIONALES
+// SEARCH
 final ProfessionalRemoteDataSource professionalRemoteDataSource =
     ProfessionalRemoteDataSourceImpl(apiClient);
 final ProfessionalRepository professionalRepository =
@@ -48,22 +49,30 @@ final ProfessionalRepository professionalRepository =
 final TagRemoteDataSource tagRemoteDataSource = TagRemoteDataSourceImpl(apiClient);
 final TagRepository tagRepository = TagRepositoryImpl(tagRemoteDataSource);
 
-// USE CASES DE BÚSQUEDA Y FILTRO
 final GetProfessionalsListUseCase getProfessionalsListUseCase =
     GetProfessionalsListUseCase(professionalRepository);
 final SearchProfessionalsUseCase searchProfessionalsUseCase =
     SearchProfessionalsUseCase(
-        professionalRepository, // 1. Para la búsqueda final
-        tagRepository,          // 2. Para el pre-filtrado de IDs por tags
+        professionalRepository, 
+        tagRepository,  
     );
 final GetAllTagsUseCase getAllTagsUseCase =
     GetAllTagsUseCase(tagRepository);
 
+final SearchCubit searchCubit = SearchCubit(
+    searchProfessionalsUseCase: searchProfessionalsUseCase,
+);
+
+final TagFilterCubit tagFilterCubit = TagFilterCubit(
+    getAllTagsUseCase: getAllTagsUseCase,
+);
 
 T injector<T>() {
     // Autenticación
     if (T == LoginUser) return loginUserUseCase as T;
     if (T == RegisterUser) return registerUserUseCase as T;
+    if (T == SearchCubit) return searchCubit as T;
+    if (T == TagFilterCubit) return tagFilterCubit as T;
     
     // Búsqueda y Filtros
     if (T == SearchProfessionalsUseCase) return searchProfessionalsUseCase as T;

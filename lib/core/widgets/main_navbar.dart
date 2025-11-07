@@ -1,4 +1,5 @@
 import 'package:alguiendijochamba_app_flutter/core/di/injector.dart';
+import 'package:alguiendijochamba_app_flutter/features/home/presentation/pages/home_page.dart';
 import 'package:alguiendijochamba_app_flutter/features/search/domain/usecases/get_all_tags_usecase.dart';
 import 'package:alguiendijochamba_app_flutter/features/search/domain/usecases/search_professionals_usecase.dart';
 import 'package:alguiendijochamba_app_flutter/features/search/presentation/pages/search_page.dart';
@@ -13,10 +14,11 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
-  late PersistentTabController _controller;
+  // 🛑 1. CORRECCIÓN: Solo declaramos _controller una vez
+  late PersistentTabController _controller; 
   late final SearchProfessionalsUseCase searchUseCase;
   late final GetAllTagsUseCase getAllTagsUseCase;
-  
+  // La línea 'late PersistentTabController _controller;' ha sido eliminada
 
   @override
   void initState() {
@@ -26,14 +28,16 @@ class _MainPageState extends State<MainPage> {
     
     _controller = PersistentTabController(initialIndex: 0);
   }
-  //navegacion remplazas ps
+  
+  // navegacion remplazas ps
   List<Widget> _buildScreens() {
     return [
-      const Scaffold(body: Center(child: Text('Home Page'))), 
+      // 🛑 2. CORRECCIÓN: Quitamos 'const' porque Home ahora recibe una variable de estado (_controller)
+      Home(controller: _controller), 
       SearchPage(
-              searchUseCase: searchUseCase,
-              getAllTagsUseCase: getAllTagsUseCase,
-            ),      
+            searchUseCase: searchUseCase,
+            getAllTagsUseCase: getAllTagsUseCase,
+          ), 
       const Scaffold(body: Center(child: Text('Process Page'))), // Process
       const Scaffold(body: Center(child: Text('Rewards Page'))), // Rewards
       const Scaffold(body: Center(child: Text('Profile Page'))), // Profile
