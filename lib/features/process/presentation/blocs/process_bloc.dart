@@ -66,24 +66,24 @@ class ProcessBloc extends Bloc<ProcessEvent, ProcessState> {
       },
     );
   }
+Future<void> _onFinishJob(FinishJob event, Emitter<ProcessState> emit) async {
+  emit(ProcessLoading());
+  print('🏁 BLOC: Completando job ${event.jobId}');
 
-  Future<void> _onFinishJob(FinishJob event, Emitter<ProcessState> emit) async {
-    emit(ProcessLoading());
-    print('🏁 BLOC: Completando job ${event.jobId}');
+  final result = await completeJob(event.jobId, event.rating, event.review);
 
-    final result = await completeJob(event.jobId, event.rating, event.review);
+  result.fold(
+    (failure) {
+      print('❌ BLOC ERROR: ${failure.toString()}');
+      emit(ProcessError(failure.toString()));
+    },
+    (_) {
+      print('✅ BLOC: JOB COMPLETADO');
+      emit(JobCompleted());
+    },
+  );
+}
 
-    result.fold(
-      (failure) {
-        print('❌ BLOC ERROR: ${failure.toString()}');
-        emit(ProcessError(failure.toString()));
-      },
-      (_) {
-        print('✅ BLOC: JOB COMPLETADO');
-        emit(JobCompleted());
-      },
-    );
-  }
 
   Future<void> _onCancelJob(
     CancelActiveJob event,

@@ -77,20 +77,21 @@ class ProcessRemoteDataSource {
   }
 
 
-  Future<void> completeJob(String jobId, int rating, String review) async {
-    await apiClient.post(
-      '/reputation/initial',
-      body: {
-        'jobId': jobId,
-        'rating': rating,
-        'review': review,
-      },
-      requiresAuth: true,
-    );
-  }
+Future<void> completeJob(String jobId, int rating, String review) async {
+  print('🔧 API CLIENT: Completando job $jobId con reputation');
+  
+  // Llamar al nuevo endpoint de reputación
+  await apiClient.post(
+    '/reputation/job/review',
+    body: {
+      'jobId': jobId,
+      'rating': rating,
+      'review': review,
+    },
+    requiresAuth: true,
+  );
+}
 
-
-  // ✅ CORREGIDO: Cambiar de /cancel a /status con PATCH
   Future<void> cancelJob(String jobId, String reason) async {
     print('🔧 API CLIENT: Cancelando job $jobId con PATCH a /status');
     await apiClient.patch(

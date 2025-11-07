@@ -9,10 +9,12 @@ import '../widgets/professional_header_widget.dart';
 import 'finish_review_page.dart';
 import 'cancel_job_page.dart';
 
+
 class ActiveJobPage extends StatelessWidget {
   final Professional professional;
   final Job job;
   final ProcessRepository repository;
+
 
   const ActiveJobPage({
     super.key,
@@ -20,6 +22,7 @@ class ActiveJobPage extends StatelessWidget {
     required this.job,
     required this.repository,
   });
+
 
   @override
   Widget build(BuildContext context) {
@@ -151,47 +154,31 @@ class ActiveJobPage extends StatelessWidget {
     );
   }
 
-  Future<void> _finishJobWithBackend(BuildContext context) async {
-    try {
-      print('🔵 INICIO Finish Job');
 
-      final result = await repository.updateJobStatus(job.id, 'Completed');
-
-      result.fold(
-        (failure) {
-          print('❌ Error Finish Job: $failure');
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Error: ${failure.toString()}')),
-            );
-          }
-        },
-        (_) {
-          print('✅ Job Completado');
-          if (context.mounted) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => FinishReviewPage(
-                  professional: professional,
-                  job: job,
-                  repository: repository,
-                ),
-              ),
-            );
-          }
-        },
+  // ✅ CORREGIDO: Navega directamente a FinishReviewPage sin hacer PATCH primero
+  void _finishJobWithBackend(BuildContext context) {
+    print('🔵 INICIO Finish Job - Navegando a FinishReviewPage');
+    print('🔍 Job ID: ${job.id}');
+    
+    if (context.mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => BlocProvider.value(
+            value: injector<ProcessBloc>(),
+            child: FinishReviewPage(
+              professional: professional,
+              job: job,
+              repository: repository,
+            ),
+          ),
+        ),
       );
-    } catch (e) {
-      print('❌ Exception Finish Job: $e');
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
-      }
     }
   }
 
+
+  // ✅ Cancel Job permanece igual
   Future<void> _cancelJobWithBackend(BuildContext context) async {
     try {
       print('🔵 INICIO Cancel Job - Navegando directamente a Screen 7');
@@ -226,6 +213,7 @@ class ActiveJobPage extends StatelessWidget {
     }
   }
 
+
   Widget _buildInfoRow(IconData icon, String text) {
     return Row(
       children: [
@@ -243,6 +231,7 @@ class ActiveJobPage extends StatelessWidget {
       ],
     );
   }
+
 
   String _formatDate(DateTime date) {
     final days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
