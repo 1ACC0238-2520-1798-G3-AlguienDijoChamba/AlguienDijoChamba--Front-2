@@ -78,9 +78,16 @@ class ProcessRemoteDataSource {
 
 
 Future<void> completeJob(String jobId, int rating, String review) async {
-  print('🔧 API CLIENT: Completando job $jobId con reputation');
+  print('🔧 API CLIENT: Terminando job $jobId con PATCH a /status');
   
-  // Llamar al nuevo endpoint de reputación
+  // ✅ Primero cambiar estado a 'Completed'
+  await apiClient.patch(
+    '/jobs/$jobId/status',
+    body: {'status': 'Completed'},  // ← 'Completed' en lugar de 'Cancelled'
+    requiresAuth: true,
+  );
+  
+  // ✅ LUEGO guardar la reputación
   await apiClient.post(
     '/reputation/job/review',
     body: {
