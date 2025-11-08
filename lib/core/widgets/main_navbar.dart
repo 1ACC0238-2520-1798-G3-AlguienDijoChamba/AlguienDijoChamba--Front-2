@@ -5,6 +5,7 @@ import 'package:alguiendijochamba_app_flutter/features/search/domain/usecases/se
 import 'package:alguiendijochamba_app_flutter/features/search/presentation/pages/search_page.dart';
 import 'package:flutter/material.dart';
 import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart';
+import 'package:alguiendijochamba_app_flutter/features/reward/presentation/pages/reward_page.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -39,7 +40,7 @@ class _MainPageState extends State<MainPage> {
             getAllTagsUseCase: getAllTagsUseCase,
           ), 
       const Scaffold(body: Center(child: Text('Process Page'))), // Process
-      const Scaffold(body: Center(child: Text('Rewards Page'))), // Rewards
+      const RewardPage(), // Rewards
       const Scaffold(body: Center(child: Text('Profile Page'))), // Profile
     ];
   }
