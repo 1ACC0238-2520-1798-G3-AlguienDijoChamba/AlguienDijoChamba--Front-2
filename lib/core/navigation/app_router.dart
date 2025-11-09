@@ -8,6 +8,7 @@ import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/search/presentation/pages/search_page.dart';
 // import '../../features/professionals/presentation/pages/professional_details_page.dart';
+import '../../features/chat/presentation/pages/chat_page.dart';
 
 
 // --- Importaciones de UseCases ---
@@ -105,8 +106,9 @@ class AppRouter {
         );
       case '/chat':
         return MaterialPageRoute(
-          builder: (_) => const PlaceholderScreen(title: 'Chat'),
+          builder: (_) => const ChatPage(),
         );
+
       case '/profile_page_full':
         return MaterialPageRoute(
           builder: (_) => const PlaceholderScreen(title: 'Mi Perfil'),
