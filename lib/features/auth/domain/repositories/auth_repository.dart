@@ -10,4 +10,6 @@ abstract class AuthRepository {
     required String apellidos,
     required String celular,
   });
+  Future<void> saveCurrentUserId(String id);
+  Future<String?> getCurrentUserId();
 }

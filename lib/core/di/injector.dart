@@ -7,6 +7,12 @@ import 'package:alguiendijochamba_app_flutter/features/auth/data/repositories/au
 import 'package:alguiendijochamba_app_flutter/features/auth/domain/repositories/auth_repository.dart';
 import 'package:alguiendijochamba_app_flutter/features/auth/domain/usecases/login_user.dart';
 import 'package:alguiendijochamba_app_flutter/features/auth/domain/usecases/register_user.dart';
+import 'package:alguiendijochamba_app_flutter/features/notifications/data/datasources/notification_remote_data_source.dart';
+import 'package:alguiendijochamba_app_flutter/features/notifications/data/repositories/notification_repository_impl.dart';
+import 'package:alguiendijochamba_app_flutter/features/notifications/domain/repositories/notification_repository.dart';
+import 'package:alguiendijochamba_app_flutter/features/notifications/domain/usecases/dismiss_notification_usecase.dart';
+import 'package:alguiendijochamba_app_flutter/features/notifications/domain/usecases/get_notifications_usecase.dart';
+import 'package:alguiendijochamba_app_flutter/features/notifications/domain/usecases/mark_as_read_usecase.dart';
 import 'package:alguiendijochamba_app_flutter/features/search/data/datasources/professional_remote_data_source.dart';
 import 'package:alguiendijochamba_app_flutter/features/search/data/datasources/tag_remote_data_source.dart';
 import 'package:alguiendijochamba_app_flutter/features/search/data/repositories/professional_repository_impl.dart' hide ProfessionalRemoteDataSourceImpl;
@@ -67,8 +73,28 @@ final TagFilterCubit tagFilterCubit = TagFilterCubit(
     getAllTagsUseCase: getAllTagsUseCase,
 );
 
+
+//Notifications
+// NOTIFICATIONS
+final NotificationRemoteDataSource notificationRemoteDataSource = 
+    NotificationRemoteDataSourceImpl(apiClient);
+
+final NotificationRepository notificationRepository = 
+    NotificationRepositoryImpl(notificationRemoteDataSource);
+
+final GetNotificationsUseCase getNotificationsUseCase = 
+    GetNotificationsUseCase(notificationRepository);
+    
+final MarkAsReadUseCase markAsReadUseCase = 
+    MarkAsReadUseCase(notificationRepository);
+
+final DismissNotificationUseCase dismissNotificationUseCase = 
+    DismissNotificationUseCase(notificationRepository);
+
 T injector<T>() {
     // Autenticación
+    if (T == ApiClient) return apiClient as T; // 🛑 ¡AÑADIR ESTO!
+    if (T == AuthRepository) return authRepository as T; // 🛑 ¡AÑADIR ESTO!
     if (T == LoginUser) return loginUserUseCase as T;
     if (T == RegisterUser) return registerUserUseCase as T;
     if (T == SearchCubit) return searchCubit as T;
@@ -79,6 +105,12 @@ T injector<T>() {
     if (T == GetAllTagsUseCase) return getAllTagsUseCase as T;
     if (T == ProfessionalRepository) return professionalRepository as T;
     if (T == TagRepository) return tagRepository as T;
+
+    //Notificaciones
+    if (T == GetNotificationsUseCase) return getNotificationsUseCase as T;
+    if (T == MarkAsReadUseCase) return markAsReadUseCase as T;
+    if (T == DismissNotificationUseCase) return dismissNotificationUseCase as T;
+    
     
     throw Exception("Dependencia no registrada: $T");
 }

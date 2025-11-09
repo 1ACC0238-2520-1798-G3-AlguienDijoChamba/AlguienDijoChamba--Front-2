@@ -9,9 +9,22 @@ class AuthRemoteDataSource {
 
   Future<Session> login(String email, String password) async {
     final body = {'email': email, 'password': password};
-    final response = await apiClient.post('/customer/login', body: body);
+    
+    // El método POST a /login NUNCA debe requerir autenticación.
+    // Asumimos que apiClient.post ya maneja que si no hay token guardado, no se adjunta header.
+    // Si tu apiClient siempre adjunta el token guardado, debes añadir: requiresAuth: false
+    final response = await apiClient.post(
+      '/customer/login', 
+      body: body,
+    );
 
-    return Session(token: response['token']);
+    final String token = response['token'];
+    final String customerId = response['customerId'];
+    
+    // Creamos el objeto User y luego la Session
+    final user = User(id: customerId); 
+
+    return Session(token: token, user: user);
   }
 
 
@@ -30,12 +43,10 @@ class AuthRemoteDataSource {
       'celular': celular,
     };
 
+    // El registro tampoco requiere autenticación previa.
     final response = await apiClient.post('/customer/register', body: body);
 
-    
+    // 🛑 ASUMO que el backend devuelve un objeto con la llave 'userId' 🛑
     return User(id: response['userId']);
   }
-
-
-
 }
