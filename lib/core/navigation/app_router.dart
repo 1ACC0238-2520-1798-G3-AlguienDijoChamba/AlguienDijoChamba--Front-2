@@ -1,5 +1,9 @@
 // Archivo: AppRouter.dart (COMPLETO Y CORREGIDO)
 
+import 'package:alguiendijochamba_app_flutter/core/api/api_client.dart';
+import 'package:alguiendijochamba_app_flutter/core/di/injector.dart';
+import 'package:alguiendijochamba_app_flutter/features/auth/domain/repositories/auth_repository.dart';
+import 'package:alguiendijochamba_app_flutter/features/notifications/presentation/pages/notifications_page.dart';
 import 'package:alguiendijochamba_app_flutter/features/shared/widgets/placeholder_screen.dart';
 import 'package:flutter/material.dart';
 
@@ -46,9 +50,13 @@ class AppRouter {
         );
       case '/login':
         return MaterialPageRoute(
-          builder: (_) => LoginPage(loginUser: loginUser),
+          builder: (_) => LoginPage(
+            loginUser: loginUser,
+            // 🛑 Añadir las nuevas dependencias requeridas por LoginPage 🛑
+            apiClient: injector<ApiClient>(),
+            authRepository: injector<AuthRepository>(),
+          ),
         );
-        
       // ----------------------------------------------------
       // RUTA DE BÚSQUEDA
       // ----------------------------------------------------
@@ -106,7 +114,7 @@ class AppRouter {
         );
       case '/notifications':
         return MaterialPageRoute(
-          builder: (_) => const PlaceholderScreen(title: 'Notificaciones'),
+        builder: (_) => const NotificationsPage(),
         );
       case '/chat':
         return MaterialPageRoute(

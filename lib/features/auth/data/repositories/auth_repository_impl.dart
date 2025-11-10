@@ -42,4 +42,15 @@ class AuthRepositoryImpl implements AuthRepository {
       celular: celular,
     );
   }
+  @override
+  Future<void> saveCurrentUserId(String id) async {
+    // Delega la lógica de guardado al TokenStorage (que ahora maneja IDs)
+    await tokenStorage.saveUserId(id);
+  }
+
+  @override
+  Future<String?> getCurrentUserId() async {
+    // Delega la lógica de obtención al TokenStorage
+    return tokenStorage.getUserId();
+  }
 }

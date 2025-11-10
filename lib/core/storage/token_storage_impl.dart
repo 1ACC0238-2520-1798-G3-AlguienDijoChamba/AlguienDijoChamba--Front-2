@@ -5,6 +5,7 @@ import 'token_storage.dart';
 
 class TokenStorageImpl implements TokenStorage {
   static const _tokenKey = 'auth_token';
+  static const _userIdKey = 'user_id';
 
   @override
   Future<String?> getToken() async {
@@ -22,5 +23,22 @@ class TokenStorageImpl implements TokenStorage {
   Future<void> deleteToken() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_tokenKey);
+  }
+  @override
+  Future<String?> getUserId() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_userIdKey);
+  }
+
+  @override
+  Future<void> saveUserId(String id) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_userIdKey, id);
+  }
+  
+  @override
+  Future<void> deleteUserId() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_userIdKey);
   }
 }

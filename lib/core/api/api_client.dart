@@ -11,50 +11,58 @@ class ApiClient {
 
   ApiClient({required this.baseUrl, required this.tokenStorage});
 
+  // 🛑 AÑADIR FUNCIÓN PARA CONSTRUCCIÓN SEGURA DE URL 🛑
+  String _buildUrl(String endpoint) {
+    // 1. Asegurar que baseUrl NO termine en '/'
+    final cleanBaseUrl = baseUrl.endsWith('/') 
+      ? baseUrl.substring(0, baseUrl.length - 1) 
+      : baseUrl;
 
+    // 2. Asegurar que el endpoint SÍ comience con '/'
+    final cleanEndpoint = endpoint.startsWith('/') 
+      ? endpoint 
+      : '/$endpoint';
+    
+    // Devuelve una URL limpia, sin doble barra
+    return cleanBaseUrl + cleanEndpoint; 
+  }
+  
   Future<Map<String, String>> _getHeaders({
     bool requiresAuth = false, 
     Map<String, String>? customHeaders
   }) async {
+    // ... (Código de _getHeaders intacto)
     final headers = {
       'Content-Type': 'application/json',
       ...?customHeaders,
     };
-
-
     if (requiresAuth) {
       final token = await tokenStorage.getToken();
-      
       if (token != null && token.isNotEmpty) {
         final authHeader = 'Bearer $token';
         headers[HttpHeaders.authorizationHeader] = authHeader; 
-        
-        // --- LÓGICA DE DEBUG AÑADIDA ---
         print('--- DEBUG API CLIENT (Token Attach) ---');
         print('Token encontrado y adjuntado. Prefijo: ${token.substring(0, 20)}...');
         print('Endpoint: Request requires authentication.');
         print('---------------------------------------');
-        // ---------------------------------
       } else {
-        // --- LÓGICA DE DEBUG AÑADIDA ---
         print('--- DEBUG API CLIENT (Token MISSING) ---');
         print('ADVERTENCIA: Solicitud protegida enviada SIN token. Esto causa 401/404.');
         print('----------------------------------------');
-        // ---------------------------------
       }
     }
     return headers;
   }
 
-
-  // POST mantiene el tipo de retorno Map, ya que se usa para login/registro que devuelven un objeto.
+  // POST (USANDO _buildUrl)
   Future<Map<String, dynamic>> post(
     String endpoint, {
     Map<String, dynamic>? body,
     Map<String, String>? headers,
     bool requiresAuth = false, 
   }) async {
-    final uri = Uri.parse('$baseUrl$endpoint');
+    // 🛑 USAR LA FUNCIÓN DE CONSTRUCCIÓN SEGURA 🛑
+    final uri = Uri.parse(_buildUrl(endpoint)); 
     print('DEBUG API CLIENT: Intentando POST a -> $uri'); 
     
     try {
@@ -79,45 +87,37 @@ class ApiClient {
     }
   }
 
-
-  // 🔑 CORRECCIÓN CLAVE: Cambiamos el tipo de retorno a dynamic.
-  // Esto permite que la función devuelva una LISTA cuando el backend envía un array,
-  // resolviendo el TypeError.
+  // GET (USANDO _buildUrl)
   Future<dynamic> get(
     String endpoint, {
     Map<String, String>? headers,
     bool requiresAuth = true, 
-    // AÑADE ESTO: Soporte para parámetros de consulta
     Map<String, dynamic>? queryParams, 
   }) async {
     
-    // 1. Inicia con la URI base
-    Uri uri = Uri.parse('$baseUrl$endpoint');
+    // 1. Inicia con la URI base (USANDO LA FUNCIÓN SEGURA)
+    Uri uri = Uri.parse(_buildUrl(endpoint));
 
 
     // 2. Si hay parámetros, adjúntalos usando Uri.replace (¡seguro!)
     if (queryParams != null && queryParams.isNotEmpty) {
       uri = uri.replace(queryParameters: {
         ...uri.queryParameters,
-        // Asegúrate de convertir todos los valores a String si es necesario
         ...queryParams.map((k, v) => MapEntry(k, v.toString())), 
       });
     }
 
-
-    print('DEBUG API CLIENT: Intentando GET a -> $uri'); // Esto mostrará la URL COMPLETA
+    print('DEBUG API CLIENT: Intentando GET a -> $uri'); 
     
     try {
       final response = await http.get(
-        uri, // Usa la URI completa con query
+        uri, 
         headers: await _getHeaders(requiresAuth: requiresAuth, customHeaders: headers),
       );
       
-      // ... el resto de tu lógica de status code ...
       if (response.statusCode == HttpStatus.ok) {
         return jsonDecode(response.body);
       } else {
-        // Por favor, verifica de nuevo qué imprime aquí
         print('❌ ERROR HTTP ${response.statusCode}: ${response.reasonPhrase}');
         print('Cuerpo del error: ${response.body}');
         throw HttpException('Error ${response.statusCode}: ${response.reasonPhrase}');
@@ -212,16 +212,37 @@ class ApiClient {
         headers: await _getHeaders(requiresAuth: requiresAuth, customHeaders: headers),
       );
 
+  Future<dynamic> patch(
+    String endpoint, {
+    Map<String, dynamic>? body,
+    Map<String, String>? headers,
+    // La mayoría de los PATCH requieren autenticación (como Marcar como Leído)
+    bool requiresAuth = true, 
+  }) async {
+    final uri = Uri.parse('$baseUrl$endpoint');
+    print('DEBUG API CLIENT: Intentando PATCH a -> $uri');
 
-      // 200 (OK) o 204 (No Content) son comunes para DELETE exitoso.
+    try {
+      final response = await http.patch(
+        uri,
+        headers: await _getHeaders(requiresAuth: requiresAuth, customHeaders: headers),
+        body: body != null ? jsonEncode(body) : null,
+      );
+
+      // Los PATCH exitosos suelen devolver 200 (OK) o 204 (No Content)
       if (response.statusCode == HttpStatus.ok || response.statusCode == HttpStatus.noContent) {
-        // Usualmente un DELETE no devuelve contenido.
-        return true; 
+        // Devuelve true para indicar éxito, o decodifica si hay cuerpo (200)
+        if (response.body.isEmpty) {
+          return true;
+        }
+        return jsonDecode(response.body); 
       } else {
+        // Manejo de errores estándar de HTTP
         throw HttpException('Error ${response.statusCode}: ${response.reasonPhrase}');
       }
     } catch (e) {
       rethrow;
     }
   }
+
 }
