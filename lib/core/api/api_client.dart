@@ -3,9 +3,11 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import '../storage/token_storage.dart'; 
 
+
 class ApiClient {
   final String baseUrl;
   final TokenStorage tokenStorage; 
+
 
   ApiClient({required this.baseUrl, required this.tokenStorage});
 
@@ -70,6 +72,7 @@ class ApiClient {
         body: body != null ? jsonEncode(body) : null,
       );
 
+
       if (response.statusCode == HttpStatus.ok || response.statusCode == HttpStatus.created) {
         final decoded = jsonDecode(response.body);
         if (decoded is Map<String, dynamic>) {
@@ -94,6 +97,7 @@ class ApiClient {
     
     // 1. Inicia con la URI base (USANDO LA FUNCIÓN SEGURA)
     Uri uri = Uri.parse(_buildUrl(endpoint));
+
 
     // 2. Si hay parámetros, adjúntalos usando Uri.replace (¡seguro!)
     if (queryParams != null && queryParams.isNotEmpty) {
@@ -123,6 +127,7 @@ class ApiClient {
     }
   }
 
+
   
   Future<dynamic> put(
     String endpoint, {
@@ -141,6 +146,7 @@ class ApiClient {
         body: body != null ? jsonEncode(body) : null,
       );
 
+
       // Los PUTs exitosos a menudo devuelven 200 (OK) con cuerpo o 204 (No Content).
       if (response.statusCode == HttpStatus.ok || response.statusCode == HttpStatus.noContent) {
         // Si el cuerpo está vacío (204), devolvemos true/null o un Map vacío.
@@ -156,32 +162,55 @@ class ApiClient {
     } catch (e) {
       rethrow;
     }
-
   }
-  Future<dynamic> delete(
-      String endpoint, {
-      Map<String, String>? headers,
-      bool requiresAuth = true, 
-    }) async {
-      final uri = Uri.parse('$baseUrl$endpoint');
-      
-      try {
-        final response = await http.delete(
-          uri,
-          headers: await _getHeaders(requiresAuth: requiresAuth, customHeaders: headers),
-        );
 
-        // 200 (OK) o 204 (No Content) son comunes para DELETE exitoso.
-        if (response.statusCode == HttpStatus.ok || response.statusCode == HttpStatus.noContent) {
-          // Usualmente un DELETE no devuelve contenido.
-          return true; 
-        } else {
-          throw HttpException('Error ${response.statusCode}: ${response.reasonPhrase}');
+
+  // ✨ NUEVO: Método PATCH (agregado para Active Jobs)
+  Future<dynamic> patch(
+    String endpoint, {
+    Map<String, dynamic>? body,
+    Map<String, String>? headers,
+    bool requiresAuth = true, 
+  }) async {
+    final uri = Uri.parse('$baseUrl$endpoint');
+    print('DEBUG API CLIENT: Intentando PATCH a -> $uri');
+    
+    try {
+      final response = await http.patch(
+        uri,
+        headers: await _getHeaders(requiresAuth: requiresAuth, customHeaders: headers),
+        body: body != null ? jsonEncode(body) : null,
+      );
+
+      // Los PATCHes exitosos devuelven típicamente 200 (OK) o 204 (No Content)
+      if (response.statusCode == HttpStatus.ok || response.statusCode == HttpStatus.noContent) {
+        // Si el cuerpo está vacío (204), devolvemos true
+        if (response.body.isEmpty) {
+            return true; 
         }
-      } catch (e) {
-        rethrow;
+        // Si hay cuerpo (200), lo decodificamos y lo devolvemos como dynamic
+        return jsonDecode(response.body); 
+      } else {
+        throw HttpException('Error ${response.statusCode}: ${response.reasonPhrase}');
       }
+    } catch (e) {
+      rethrow;
     }
+  }
+
+
+  Future<dynamic> delete(
+    String endpoint, {
+    Map<String, String>? headers,
+    bool requiresAuth = true, 
+  }) async {
+    final uri = Uri.parse('$baseUrl$endpoint');
+    
+    try {
+      final response = await http.delete(
+        uri,
+        headers: await _getHeaders(requiresAuth: requiresAuth, customHeaders: headers),
+      );
 
   Future<dynamic> patch(
     String endpoint, {

@@ -13,31 +13,18 @@ import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/search/presentation/pages/search_page.dart';
 // import '../../features/professionals/presentation/pages/professional_details_page.dart';
 
-
 // --- Importaciones de UseCases ---
 import '../../features/auth/domain/usecases/register_user.dart';
 import '../../features/auth/domain/usecases/login_user.dart';
 import '../../features/search/domain/usecases/search_professionals_usecase.dart';
 import '../../features/search/domain/usecases/get_all_tags_usecase.dart';
 
-// --- Placeholder temporal para la nueva ruta (CORREGIDO) ---
-class ProfessionalDetailsPage extends StatelessWidget {
-  // 💡 CORRECCIÓN: Ahora espera un String
-  final String professionalId;
-  const ProfessionalDetailsPage({super.key, required this.professionalId});
-  
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Detalles del Profesional')),
-      body: Center(
-        child: Text('Cargando datos para el Profesional ID: $professionalId', style: const TextStyle(fontSize: 16)),
-      ),
-    );
-  }
-}
-// ------------------------------------------------------------------
-
+// --- Importaciones para PROCESS FEATURE ---
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:provider/provider.dart';
+import '../../core/di/injector.dart';
+import '../../features/process/presentation/blocs/process_bloc.dart';
+import '../../features/process/presentation/pages/professional_detail_page.dart';
 
 class AppRouter {
   final RegisterUser registerUser;
@@ -81,24 +68,42 @@ class AppRouter {
           ),
         );
         
-      // ----------------------------------------------------
-      // 🚀 RUTA DE DETALLES DEL PROFESIONAL (CORREGIDA)
-      // ----------------------------------------------------
-      case '/professional_details': 
-        // 💡 CORRECCIÓN: Esperamos un String para el ID.
-        final professionalId = settings.arguments as String?; 
+      // ==========================================
+      // ✨ PROCESS FEATURE - NUEVAS RUTAS
+      // ✨ NOTA: MultiProvider proporciona ProcessBloc a TODAS las pantallas
+      //          de esta rama, evitando ProviderNotFoundError
+      // ==========================================
+      case '/professional_details':
+        // ✅ RECIBIR Y VALIDAR EL ID
+        final professionalId = settings.arguments;
         
-        if (professionalId == null) {
-            // Si el ID es nulo, mostramos una pantalla de error
-            return MaterialPageRoute(
-              builder: (_) => const PlaceholderScreen(title: 'Error de Navegación: ID no proporcionado'),
-            );
+        if (professionalId == null || professionalId.toString().isEmpty) {
+          print('❌ ERROR: professionalId es null o vacío');
+          return MaterialPageRoute(
+            builder: (_) => const PlaceholderScreen(
+              title: 'Error: ID del profesional no proporcionado',
+            ),
+          );
         }
 
-        // Navegamos a la pantalla de detalles, pasando el ID (como String)
+        print('✅ RUTA PROFESIONAL: Navegando a Professional Detail con ID: $professionalId');
+        
+        // ✅ NAVEGACIÓN CORRECTA CON MULTIPROVIDER
+        // MultiProvider envuelve la página y proporciona ProcessBloc
+        // a ella y a TODAS sus páginas secundarias
         return MaterialPageRoute(
-          builder: (_) => ProfessionalDetailsPage(professionalId: professionalId),
+          builder: (_) => MultiProvider(
+            providers: [
+              BlocProvider<ProcessBloc>.value(
+                value: injector<ProcessBloc>(),
+              ),
+            ],
+            child: ProfessionalDetailPage(
+              professionalId: professionalId.toString(),
+            ),
+          ),
         );
+
         
       // ----------------------------------------------------
       // OTRAS RUTAS DE LA APP (Usan PlaceholderScreen temporalmente)

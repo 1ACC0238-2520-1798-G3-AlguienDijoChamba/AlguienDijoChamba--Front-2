@@ -1,5 +1,3 @@
-// Archivo: lib/features/search/presentation/widgets/professional_search_results.dart
-
 import 'package:alguiendijochamba_app_flutter/features/search/domain/entities/search_profesional_entity.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -7,47 +5,51 @@ import 'package:easy_load_more/easy_load_more.dart';
 // 💡 Necesitas esta importación para usar PersistentNavBarNavigator
 import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart'; 
 
+
 import '../cubit/search_cubit.dart'; 
 import '../cubit/search_state.dart'; 
 import 'professional_card.dart'; 
 
-// --- WIDGET TEMPORAL (DEBE SER EL MISMO QUE USAS EN APP_ROUTER) ---
-// Asumimos que esta clase está disponible y espera un String.
-class ProfessionalDetailsPage extends StatelessWidget {
-  final String professionalId;
-  const ProfessionalDetailsPage({super.key, required this.professionalId});
-  
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Detalles del Profesional')),
-      body: Center(
-        child: Text('Cargando datos para el Profesional ID: $professionalId', style: const TextStyle(fontSize: 16)),
-      ),
-    );
-  }
-}
+
+// --- IMPORTACIONES PARA PROCESS FEATURE ---
+import 'package:alguiendijochamba_app_flutter/features/process/presentation/pages/professional_detail_page.dart';
+//IMPORTS DE PROCESS
+import 'package:alguiendijochamba_app_flutter/core/di/injector.dart';
+import 'package:alguiendijochamba_app_flutter/features/process/presentation/blocs/process_bloc.dart';
 // ------------------------------------------------------------------
+
 
 class ProfessionalSearchResults extends StatelessWidget {
   const ProfessionalSearchResults({super.key});
 
+
   // 🚀 FUNCIÓN DE NAVEGACIÓN UNIFICADA
   void _navigateToProfile(BuildContext context, SearchedProfessionalEntity prof) {
-    // Usamos el método de navegación del paquete PersistentNavBar para asegurar el push.
     PersistentNavBarNavigator.pushNewScreen(
       context,
-      screen: ProfessionalDetailsPage(
-        professionalId: prof.professionalId, // Pasa el ID (asumido como String)
+      screen: BlocProvider<ProcessBloc>(
+        create: (_) => injector<ProcessBloc>(),
+        child: ProfessionalDetailPage(professionalId: prof.professionalId),
       ),
-      withNavBar: false, // Oculta la barra inferior en la nueva pantalla
+      withNavBar: false,
       pageTransitionAnimation: PageTransitionAnimation.cupertino,
     );
   }
 
+  // ✅ FUNCIÓN AUXILIAR PARA FILTRAR IDS INVÁLIDOS
+  List<SearchedProfessionalEntity> _filterValidProfessionals(List<SearchedProfessionalEntity> professionals) {
+    return professionals.where((p) => 
+      p.professionalId != null && 
+      p.professionalId.isNotEmpty && 
+      p.professionalId != '00000000-0000-0000-0000-000000000000'
+    ).toList();
+  }
+
+
   @override
   Widget build(BuildContext context) {
     final searchCubit = context.read<SearchCubit>();
+
 
     return BlocBuilder<SearchCubit, SearchState>(
       builder: (context, state) {
@@ -72,15 +74,19 @@ class ProfessionalSearchResults extends StatelessWidget {
           );
         }
 
+
         final List<SearchedProfessionalEntity> professionals;
         final bool hasMore;
         final bool isLoadingMore = state is SearchLoadingMore;
 
+
         if (state is SearchLoaded) {
-            professionals = state.professionals;
+            // ✅ FILTRAR PROFESIONALES CON IDS VÁLIDOS
+            professionals = _filterValidProfessionals(state.professionals);
             hasMore = state.hasMore;
         } else if (state is SearchLoadingMore) {
-            professionals = state.professionals;
+            // ✅ FILTRAR PROFESIONALES CON IDS VÁLIDOS
+            professionals = _filterValidProfessionals(state.professionals);
             hasMore = state.hasMore;
         } else {
             professionals = [];
@@ -92,6 +98,7 @@ class ProfessionalSearchResults extends StatelessWidget {
             child: Text("No se encontraron profesionales con los filtros seleccionados."),
           );
         }
+
 
         // Renderizar la lista con Paginación
         return EasyLoadMore(
@@ -113,7 +120,9 @@ class ProfessionalSearchResults extends StatelessWidget {
                 );
               }
 
+
               final prof = professionals[index];
+
 
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 4.0),
