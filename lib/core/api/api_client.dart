@@ -204,7 +204,8 @@ class ApiClient {
     Map<String, String>? headers,
     bool requiresAuth = true, 
   }) async {
-    final uri = Uri.parse('$baseUrl$endpoint');
+    final uri = Uri.parse(_buildUrl(endpoint));
+    print('DEBUG API CLIENT: Intentando DELETE a -> $uri');
     
     try {
       final response = await http.delete(
@@ -212,37 +213,19 @@ class ApiClient {
         headers: await _getHeaders(requiresAuth: requiresAuth, customHeaders: headers),
       );
 
-  Future<dynamic> patch(
-    String endpoint, {
-    Map<String, dynamic>? body,
-    Map<String, String>? headers,
-    // La mayoría de los PATCH requieren autenticación (como Marcar como Leído)
-    bool requiresAuth = true, 
-  }) async {
-    final uri = Uri.parse('$baseUrl$endpoint');
-    print('DEBUG API CLIENT: Intentando PATCH a -> $uri');
-
-    try {
-      final response = await http.patch(
-        uri,
-        headers: await _getHeaders(requiresAuth: requiresAuth, customHeaders: headers),
-        body: body != null ? jsonEncode(body) : null,
-      );
-
-      // Los PATCH exitosos suelen devolver 200 (OK) o 204 (No Content)
+      // Los DELETEs exitosos suelen devolver 200 (OK) o 204 (No Content)
       if (response.statusCode == HttpStatus.ok || response.statusCode == HttpStatus.noContent) {
-        // Devuelve true para indicar éxito, o decodifica si hay cuerpo (200)
+        // Si el cuerpo está vacío (204), devolvemos true
         if (response.body.isEmpty) {
           return true;
         }
+        // Si hay cuerpo (200), lo decodificamos y lo devolvemos
         return jsonDecode(response.body); 
       } else {
-        // Manejo de errores estándar de HTTP
         throw HttpException('Error ${response.statusCode}: ${response.reasonPhrase}');
       }
     } catch (e) {
       rethrow;
     }
   }
-
 }
