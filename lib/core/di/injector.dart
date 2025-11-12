@@ -32,6 +32,8 @@ import 'package:alguiendijochamba_app_flutter/features/process/domain/usecases/c
 import 'package:alguiendijochamba_app_flutter/features/process/domain/usecases/complete_job.dart';
 import 'package:alguiendijochamba_app_flutter/features/process/domain/usecases/cancel_job.dart';
 import 'package:alguiendijochamba_app_flutter/features/process/presentation/blocs/process_bloc.dart';
+import 'package:alguiendijochamba_app_flutter/core/api/signalr_service.dart'; // <-- NUEVO
+
 
 
 // ✨ BASE URL - ASEGÚRATE DE QUE ESTÉ EN constants.dart
@@ -134,6 +136,11 @@ final ProcessBloc processBloc = ProcessBloc(
   cancelJob: cancelJob,
 );
 
+final SignalRService signalRService = SignalRService(
+  tokenStorage: tokenStorage,
+  processBloc: processBloc // Pasa la instancia del BLoC
+);
+
 T injector<T>() {
     // Autenticación
     if (T == ApiClient) return apiClient as T; // 🛑 ¡AÑADIR ESTO!
@@ -161,6 +168,12 @@ T injector<T>() {
     if (T == CompleteJob) return completeJob as T;
     if (T == CancelJob) return cancelJob as T;
     if (T == ProcessRepository) return processRepository as T;
+
+     if (T == ProcessBloc) return processBloc as T;
     
+    // --- AÑADE EL NUEVO SERVICIO ---
+    if (T == SignalRService) return signalRService as T;
+
     throw Exception("Dependencia no registrada: $T");
+    
 }

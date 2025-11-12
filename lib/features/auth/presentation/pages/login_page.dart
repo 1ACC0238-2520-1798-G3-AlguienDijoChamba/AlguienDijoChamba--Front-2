@@ -1,10 +1,12 @@
 import 'package:alguiendijochamba_app_flutter/core/api/api_client.dart';
 import 'package:alguiendijochamba_app_flutter/features/auth/domain/repositories/auth_repository.dart';
 import 'package:alguiendijochamba_app_flutter/features/auth/domain/usecases/login_user.dart';
-import 'package:alguiendijochamba_app_flutter/features/auth/domain/entities/session.dart'; // Necesario para tipar la respuesta
+import 'package:alguiendijochamba_app_flutter/features/auth/domain/entities/session.dart'; 
 import 'package:alguiendijochamba_app_flutter/features/shared/widgets/TopBar.dart';
 import 'package:alguiendijochamba_app_flutter/features/auth/presentation/widgets/text_field.dart';
 import 'package:alguiendijochamba_app_flutter/core/widgets/main_navbar.dart';
+import 'package:alguiendijochamba_app_flutter/core/api/signalr_service.dart'; 
+import 'package:alguiendijochamba_app_flutter/core/di/injector.dart'; 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
@@ -58,23 +60,10 @@ class _LoginPageState extends State<LoginPage> {
     try {
       final String email = emailController.text.trim(); 
       final String password = passwordController.text.trim();
-      
-      // 1. Ejecutar el LOGIN y obtener la sesión. 
-      // ⚠️ IMPORTANTE: 'loginUser.call' DEBE devolver Future<Session>.
-      final Session session = await widget.loginUser.call( 
-        email, 
-        password,
-      );
-
-      // 🛑 2. ELIMINACIÓN DE LA LLAMADA AL 404 Y ACCESO DIRECTO AL ID 🛑
-      
-      // Eliminamos estas líneas que fallaban:
-      // final profileData = await widget.apiClient.get('/customers/me'); 
-      // final String customerId = profileData['id'];
-
-      // Asumiendo que Session tiene una propiedad 'user' que contiene el 'id':
+      final Session session = await widget.loginUser.call(email, password);
       final String customerId = session.user.id; 
-
+      await widget.authRepository.saveCurrentUserId(customerId); 
+      await injector<SignalRService>().connect();
       // 🛑 3. GUARDAR EL ID DE CLIENTE REAL 🛑
       await widget.authRepository.saveCurrentUserId(customerId); 
 

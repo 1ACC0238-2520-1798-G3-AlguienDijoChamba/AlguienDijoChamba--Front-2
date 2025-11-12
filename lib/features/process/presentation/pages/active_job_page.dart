@@ -1,14 +1,14 @@
-import 'package:alguiendijochamba_app_flutter/core/di/injector.dart';
-import 'package:alguiendijochamba_app_flutter/features/process/domain/repositories/process_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:alguiendijochamba_app_flutter/core/di/injector.dart';
+import 'package:alguiendijochamba_app_flutter/features/process/domain/repositories/process_repository.dart';
 import '../../domain/entities/professional.dart';
 import '../../domain/entities/job.dart';
 import '../blocs/process_bloc.dart';
+import '../blocs/process_state.dart';
 import '../widgets/professional_header_widget.dart';
 import 'finish_review_page.dart';
 import 'cancel_job_page.dart';
-
 
 class ActiveJobPage extends StatelessWidget {
   final Professional professional;
@@ -28,25 +28,48 @@ class ActiveJobPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider.value(
       value: injector<ProcessBloc>(),
-      child: Scaffold(
-        backgroundColor: const Color(0xFFF5F5F5),
-        appBar: AppBar(
-          backgroundColor: Colors.white,
-          elevation: 0,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Color(0xFF212121)),
-            onPressed: () => Navigator.pop(context),
-          ),
-          title: const Text(
-            'Process',
-            style: TextStyle(
-              color: Color(0xFF212121),
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
+      // --- AÑADIR BLOCLISTENER PARA SIGNALR ---
+      child: BlocListener<ProcessBloc, ProcessState>(
+        listener: (context, state) {
+          if (state is JobAcceptedByTechnician && state.jobId == job.id) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('¡Un técnico ha aceptado tu solicitud!'),
+                backgroundColor: Colors.green,
+              ),
+            );
+            // Aquí podrías refrescar la data o cambiar la UI
+          }
+          if (state is JobDeclinedByTechnician && state.jobId == job.id) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('El técnico ha rechazado la solicitud.'),
+                backgroundColor: Colors.orange,
+              ),
+            );
+            // Aquí deberías navegar hacia atrás o permitir buscar otro técnico
+          }
+        },
+        // ------------------------------------------
+        child: Scaffold(
+          backgroundColor: const Color(0xFFF5F5F5),
+          appBar: AppBar(
+            backgroundColor: Colors.white,
+            elevation: 0,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Color(0xFF212121)),
+              onPressed: () => Navigator.pop(context),
+            ),
+            title: const Text(
+              'Process',
+              style: TextStyle(
+                color: Color(0xFF212121),
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
-        ),
-        body: SingleChildScrollView(
+          body: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -151,6 +174,7 @@ class ActiveJobPage extends StatelessWidget {
           ),
         ),
       ),
+    ),
     );
   }
 
