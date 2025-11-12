@@ -66,6 +66,26 @@ class ProfessionalCard extends StatelessWidget {
     );
   }
 
+  // Método helper para validar y obtener la imagen de perfil
+  ImageProvider? _getProfileImage(String? url) {
+    if (url == null || url.isEmpty) {
+      return null;
+    }
+    
+    // Validar que la URL sea válida (http o https)
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      try {
+        return NetworkImage(url);
+      } catch (e) {
+        print('Error loading profile image: $e');
+        return null;
+      }
+    }
+    
+    // Si no es una URL válida, retornar null
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     // 💡 NUEVO: El InkWell envuelve todo el contenido clicable
@@ -99,9 +119,18 @@ class ProfessionalCard extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 24,
-                    backgroundImage: (fotoPerfilUrl != null && fotoPerfilUrl!.isNotEmpty)
-                        ? NetworkImage(fotoPerfilUrl!)
-                        : const AssetImage('assets/images/default_profile.png') as ImageProvider,
+                    backgroundColor: const Color(0xFF6366F1),
+                    backgroundImage: _getProfileImage(fotoPerfilUrl),
+                    child: _getProfileImage(fotoPerfilUrl) == null
+                        ? Text(
+                            '${nombres.isNotEmpty ? nombres[0].toUpperCase() : ''}${apellidos.isNotEmpty ? apellidos[0].toUpperCase() : ''}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          )
+                        : null,
                   ),
                   _buildVerificationBadge(),
                 ],

@@ -15,7 +15,7 @@ import 'package:alguiendijochamba_app_flutter/features/notifications/domain/usec
 import 'package:alguiendijochamba_app_flutter/features/notifications/domain/usecases/mark_as_read_usecase.dart';
 import 'package:alguiendijochamba_app_flutter/features/search/data/datasources/professional_remote_data_source.dart';
 import 'package:alguiendijochamba_app_flutter/features/search/data/datasources/tag_remote_data_source.dart';
-import 'package:alguiendijochamba_app_flutter/features/search/data/repositories/professional_repository_impl.dart' hide ProfessionalRemoteDataSourceImpl;
+import 'package:alguiendijochamba_app_flutter/features/search/data/repositories/professional_repository_impl.dart';
 import 'package:alguiendijochamba_app_flutter/features/search/data/repositories/tag_repository_impl.dart';
 import 'package:alguiendijochamba_app_flutter/features/search/domain/repositories/professional_repository.dart';
 import 'package:alguiendijochamba_app_flutter/features/search/domain/repositories/tag_repository.dart';
@@ -92,7 +92,6 @@ final TagFilterCubit tagFilterCubit = TagFilterCubit(
 );
 
 
-//Notifications
 // NOTIFICATIONS
 final NotificationRemoteDataSource notificationRemoteDataSource = 
     NotificationRemoteDataSourceImpl(apiClient);
@@ -109,6 +108,32 @@ final MarkAsReadUseCase markAsReadUseCase =
 final DismissNotificationUseCase dismissNotificationUseCase = 
     DismissNotificationUseCase(notificationRepository);
 
+// PROCESS
+final ProcessRemoteDataSource processRemoteDataSource = 
+    ProcessRemoteDataSource(apiClient: apiClient);
+
+final ProcessRepository processRepository = 
+    ProcessRepositoryImpl(remoteDataSource: processRemoteDataSource);
+
+final GetProfessionalDetail getProfessionalDetail = 
+    GetProfessionalDetail(processRepository);
+
+final CreateJobRequest createJobRequest = 
+    CreateJobRequest(processRepository);
+
+final CompleteJob completeJob = 
+    CompleteJob(processRepository);
+
+final CancelJob cancelJob = 
+    CancelJob(processRepository);
+
+final ProcessBloc processBloc = ProcessBloc(
+  getProfessionalDetail: getProfessionalDetail,
+  createJobRequest: createJobRequest,
+  completeJob: completeJob,
+  cancelJob: cancelJob,
+);
+
 T injector<T>() {
     // Autenticación
     if (T == ApiClient) return apiClient as T; // 🛑 ¡AÑADIR ESTO!
@@ -124,11 +149,18 @@ T injector<T>() {
     if (T == ProfessionalRepository) return professionalRepository as T;
     if (T == TagRepository) return tagRepository as T;
 
-    //Notificaciones
+    // Notificaciones
     if (T == GetNotificationsUseCase) return getNotificationsUseCase as T;
     if (T == MarkAsReadUseCase) return markAsReadUseCase as T;
     if (T == DismissNotificationUseCase) return dismissNotificationUseCase as T;
     
+    // Process
+    if (T == ProcessBloc) return processBloc as T;
+    if (T == GetProfessionalDetail) return getProfessionalDetail as T;
+    if (T == CreateJobRequest) return createJobRequest as T;
+    if (T == CompleteJob) return completeJob as T;
+    if (T == CancelJob) return cancelJob as T;
+    if (T == ProcessRepository) return processRepository as T;
     
     throw Exception("Dependencia no registrada: $T");
 }

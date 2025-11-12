@@ -36,7 +36,18 @@ class ProfessionalHeaderWidget extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 30,
-                    backgroundImage: NetworkImage(professional.profileImage),
+                    backgroundColor: const Color(0xFF6366F1),
+                    backgroundImage: _getProfileImage(professional.profileImage),
+                    child: _getProfileImage(professional.profileImage) == null
+                        ? Text(
+                            _getInitials(professional.fullName),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          )
+                        : null,
                   ),
                   Positioned(
                     bottom: 0,
@@ -145,5 +156,33 @@ class ProfessionalHeaderWidget extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  // Método helper para validar y obtener la imagen de perfil
+  ImageProvider? _getProfileImage(String? url) {
+    if (url == null || url.isEmpty) {
+      return null;
+    }
+    
+    // Validar que la URL sea válida (http o https)
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      try {
+        return NetworkImage(url);
+      } catch (e) {
+        print('Error loading profile image: $e');
+        return null;
+      }
+    }
+    
+    // Si no es una URL válida, retornar null
+    return null;
+  }
+
+  // Método helper para obtener las iniciales del nombre
+  String _getInitials(String fullName) {
+    final names = fullName.trim().split(' ');
+    if (names.isEmpty) return '?';
+    if (names.length == 1) return names[0][0].toUpperCase();
+    return '${names[0][0].toUpperCase()}${names[1][0].toUpperCase()}';
   }
 }
