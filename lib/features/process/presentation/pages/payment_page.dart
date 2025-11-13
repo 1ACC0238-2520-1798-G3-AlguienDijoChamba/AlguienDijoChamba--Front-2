@@ -26,10 +26,14 @@ class PaymentPageWrapper extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocListener<ProcessBloc, ProcessState>(
-      bloc: injector<ProcessBloc>(), // Escucha el BLoC global
+      // 🛑 Asegúrate de usar el inyector para escuchar el Mismo BloC Global
+      bloc: injector<ProcessBloc>(), 
       listener: (context, state) {
-        // 🚀 DISPARA LA PANTALLA DE PAGO (Imagen 5)
+        
+        print("🔄 PaymentPageWrapper detectó estado: $state"); // <--- DEBUG
+
         if (state is JobAcceptedShowPayment) {
+          print("✅ Transición a Pago detectada. Navegando...");
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
@@ -37,31 +41,21 @@ class PaymentPageWrapper extends StatelessWidget {
                 professional: professional,
                 job: job,
                 repository: repository,
-                amountToPay: state.proposedCost, // <-- 🚀 USA EL COSTO REAL
+                amountToPay: state.proposedCost,
               ),
             ),
           );
         }
       },
       child: Scaffold(
-        appBar: AppBar(
-          title: const Text("Esperando Respuesta"),
-          backgroundColor: Colors.white,
-          foregroundColor: const Color(0xFF212121),
-        ),
+        appBar: AppBar(title: const Text("Esperando Respuesta")),
         body: const Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               CircularProgressIndicator(),
-              SizedBox(height: 16),
-              Text(
-                'Esperando confirmación del técnico...',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Color(0xFF757575),
-                ),
-              ),
+              SizedBox(height: 20),
+              Text("Esperando confirmación del técnico..."),
             ],
           ),
         ),

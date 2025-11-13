@@ -47,25 +47,37 @@ class SignalRService {
     
     // 1. El Técnico (Android) ACEPTÓ
     _hubConnection!.on('RequestAccepted', (arguments) {
-      print('SignalR (Cliente): ¡Solicitud Aceptada! $arguments');
-      if (arguments != null && arguments.isNotEmpty) {
-        // SignalR suele enviar el objeto como el primer argumento
-        final data = arguments[0] as Map<String, dynamic>; 
-        
-        final jobId = data['jobId'].toString(); // Ojo con las mayúsculas/minúsculas del backend
-        final professionalId = data['professionalId'].toString();
-        // Asegúrate de parsear el costo a double
-        final proposedCost = (data['proposedCost'] as num?)?.toDouble(); 
+      print('🚀 SIGNALR (Cliente): RECIBIDO EVENTO RequestAccepted');
+      print('📦 Argumentos crudos: $arguments');
 
-        processBloc.add(JobStatusUpdatedByHub(
+      if (arguments != null && arguments.isNotEmpty) {
+        try {
+          // .NET suele enviar el objeto como un Map en la primera posición
+          final data = arguments[0] as Map<String, dynamic>;
+          print('📦 Datos decodificados: $data');
+
+          // LEER CON SEGURIDAD (Maneja Mayúsculas o Minúsculas)
+          final jobId = (data['jobId'] ?? data['JobId'])?.toString() ?? '';
+          final professionalId = (data['professionalId'] ?? data['ProfessionalId'])?.toString() ?? '';
+          
+          // Manejo seguro de números (int o double)
+          final costRaw = data['proposedCost'] ?? data['ProposedCost'];
+          final proposedCost = (costRaw is int) ? costRaw.toDouble() : (costRaw as double?);
+
+          print('✅ Parseo Exitoso -> JobId: $jobId, Costo: $proposedCost');
+
+          // Notifica al BLoC
+          processBloc.add(JobStatusUpdatedByHub(
             jobId: jobId, 
             status: "Accepted", 
             professionalId: professionalId,
             proposedCost: proposedCost
-        ));
+          ));
+        } catch (e) {
+          print('❌ ERROR PARSEANDO DATA SIGNALR: $e');
+        }
       }
     });
-
     // 2. El Técnico (Android) RECHAZÓ
     _hubConnection!.on('RequestDeclined', (arguments) {
       print('SignalR (Cliente): ¡Solicitud Rechazada! $arguments');
