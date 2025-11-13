@@ -49,10 +49,20 @@ class SignalRService {
     _hubConnection!.on('RequestAccepted', (arguments) {
       print('SignalR (Cliente): ¡Solicitud Aceptada! $arguments');
       if (arguments != null && arguments.isNotEmpty) {
-        final jobId = arguments[0] as String;
-        final professionalId = arguments[1] as String;
-        // Notifica al BLoC para que la UI reaccione
-        processBloc.add(JobStatusUpdatedByHub(jobId: jobId, status: "Accepted", professionalId: professionalId));
+        // SignalR suele enviar el objeto como el primer argumento
+        final data = arguments[0] as Map<String, dynamic>; 
+        
+        final jobId = data['jobId'].toString(); // Ojo con las mayúsculas/minúsculas del backend
+        final professionalId = data['professionalId'].toString();
+        // Asegúrate de parsear el costo a double
+        final proposedCost = (data['proposedCost'] as num?)?.toDouble(); 
+
+        processBloc.add(JobStatusUpdatedByHub(
+            jobId: jobId, 
+            status: "Accepted", 
+            professionalId: professionalId,
+            proposedCost: proposedCost
+        ));
       }
     });
 

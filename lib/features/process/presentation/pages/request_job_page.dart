@@ -8,6 +8,9 @@ import '../blocs/process_state.dart';
 import '../widgets/professional_header_widget.dart';
 import '../widgets/job_category_chip.dart';
 import 'payment_page.dart';
+import 'package:alguiendijochamba_app_flutter/core/storage/token_storage.dart';
+import 'package:alguiendijochamba_app_flutter/core/di/injector.dart';
+
 
 class RequestJobPage extends StatefulWidget {
   final Professional professional;
@@ -484,7 +487,8 @@ class _RequestJobPageState extends State<RequestJobPage> {
   }
   // --------------------------------------------------
 
-  void _submitJobRequest() {
+  void _submitJobRequest() async {
+    // 1. Validaciones visuales
     if (_addressController.text.isEmpty ||
         _hourController.text.isEmpty ||
         _selectedDate == null ||
@@ -495,7 +499,6 @@ class _RequestJobPageState extends State<RequestJobPage> {
       return;
     }
 
-    // Validación adicional de fecha y hora
     if (_selectedDate == null || _selectedTime == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please select date and time')),
@@ -503,14 +506,21 @@ class _RequestJobPageState extends State<RequestJobPage> {
       return;
     }
 
-    // ✨ DEBUG
-    print('🔍 Professional ID Type: ${widget.professional.id.runtimeType}');
-    print('🔍 Professional ID Value: ${widget.professional.id}');
-    print(
-      '🔍 Professional ID isEmpty: ${widget.professional.id.toString().isEmpty}',
-    );
+    // 2. Obtener ID del usuario (Asíncrono)
+    final tokenStorage = injector<TokenStorage>();
+    final currentUserId = await tokenStorage.getUserId();
 
-    // Combina Fecha y Hora
+    // 🛑 SEGURIDAD: Verificar si el widget sigue vivo antes de usar 'context'
+    if (!mounted) return; 
+
+    if (currentUserId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error: User session not found. Please login again.')),
+      );
+      return;
+    }
+
+    // 3. Preparar datos
     final scheduledDateTime = DateTime(
       _selectedDate!.year,
       _selectedDate!.month,
@@ -520,15 +530,15 @@ class _RequestJobPageState extends State<RequestJobPage> {
     );
 
     final jobData = {
-      'professionalId': widget.professional.id.toString(), // ✨ FUERZA A STRING
-      'customerId': widget.professional.id.toString(),
+      'professionalId': widget.professional.id.toString(),
+      'customerId': currentUserId, // ✅ CORRECTO
       'specialty': widget.professional.specialties.isNotEmpty
           ? widget.professional.specialties.first
           : 'General',
       'description': _selectedCategories.join(', '),
       'address': _addressController.text,
-      'scheduledDate': scheduledDateTime.toIso8601String(), // Envía fecha y hora combinadas
-      'scheduledHour': _hourController.text, // Envía el string "HH:mm"
+      'scheduledDate': scheduledDateTime.toIso8601String(),
+      'scheduledHour': _hourController.text,
       'categories': _selectedCategories,
       'paymentMethod': _selectedPaymentMethod,
       'additionalMessage': _messageController.text,
@@ -536,8 +546,11 @@ class _RequestJobPageState extends State<RequestJobPage> {
     };
 
     print('📊 JOB DATA: $jobData');
+    
+    // Enviar evento al Bloc
     context.read<ProcessBloc>().add(CreateJob(jobData));
   }
+
 
   @override
   void dispose() {

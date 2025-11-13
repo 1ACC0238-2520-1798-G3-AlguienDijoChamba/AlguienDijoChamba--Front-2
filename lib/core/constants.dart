@@ -17,6 +17,5 @@ const String BASE_URL = 'http://localhost:5000/api/v1';  // 🚀 REEMPLAZA CON T
 
 // 4️⃣ iOS SIMULATOR (Desarrollo local)
 // const String BASE_URL = 'http://localhost:5000/api/v1';
-
 // 5️⃣ WEB/CHROME (Desarrollo local)
 // const String BASE_URL = 'http://localhost:5000/api/v1';
