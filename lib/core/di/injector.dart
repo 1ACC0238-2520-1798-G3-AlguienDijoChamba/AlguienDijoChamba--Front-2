@@ -142,9 +142,12 @@ final SignalRService signalRService = SignalRService(
 );
 
 T injector<T>() {
+    // Storage
+    if (T == TokenStorage) return tokenStorage as T;
+    
     // Autenticación
-    if (T == ApiClient) return apiClient as T; // 🛑 ¡AÑADIR ESTO!
-    if (T == AuthRepository) return authRepository as T; // 🛑 ¡AÑADIR ESTO!
+    if (T == ApiClient) return apiClient as T;
+    if (T == AuthRepository) return authRepository as T;
     if (T == LoginUser) return loginUserUseCase as T;
     if (T == RegisterUser) return registerUserUseCase as T;
     if (T == SearchCubit) return searchCubit as T;
@@ -168,10 +171,8 @@ T injector<T>() {
     if (T == CompleteJob) return completeJob as T;
     if (T == CancelJob) return cancelJob as T;
     if (T == ProcessRepository) return processRepository as T;
-
-     if (T == ProcessBloc) return processBloc as T;
     
-    // --- AÑADE EL NUEVO SERVICIO ---
+    // SignalR
     if (T == SignalRService) return signalRService as T;
 
     throw Exception("Dependencia no registrada: $T");
