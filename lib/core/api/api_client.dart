@@ -215,5 +215,64 @@ class ApiClient {
       rethrow;
     }
   }
+  
+    Future<Map<String, dynamic>> postFile(
+    String endpoint, {
+    required File file,
+    required String fieldName, // El nombre del campo en el formulario (ej: 'PhotoFile')
+  
+  }) async {
+    
+    // 1. Construir la URI de forma segura
+    final uri = Uri.parse(_buildUrl(endpoint));
+    final token = await tokenStorage.getToken(); // Obtener el token guardado
 
+    print('DEBUG API CLIENT: Intentando POST FILE (Multipart) a -> $uri');
+
+
+
+    // 2. Crear la solicitud Multipart
+    final request = http.MultipartRequest('POST', uri);
+
+
+    // 4. Adjuntar el archivo
+    final fileStream = http.ByteStream(file.openRead());
+    final fileLength = await file.length();
+
+    final multipartFile = http.MultipartFile(
+      fieldName, // Ejemplo: 'PhotoFile'
+      fileStream,
+      fileLength,
+      filename: file.path.split('/').last, // Nombre original del archivo para el servidor
+    );
+
+    request.files.add(multipartFile);
+
+    try {
+      // 5. Enviar la solicitud
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      // 6. Manejar la respuesta
+      if (response.statusCode == HttpStatus.ok) { // Esperamos 200 OK
+        // El backend devuelve un JSON: { "photoUrl": "string" }
+        return json.decode(response.body) as Map<String, dynamic>;
+      } else {
+        // Intenta decodificar el error si es JSON
+        String errorMessage = 'File upload failed with status ${response.statusCode}: ${response.reasonPhrase}';
+        try {
+          final errorBody = json.decode(response.body);
+          errorMessage = errorBody['detail'] ?? errorBody['title'] ?? errorMessage;
+        } catch (_) {
+          // El cuerpo no es JSON, usa el mensaje de error HTTP básico
+        }
+        print('❌ ERROR HTTP ${response.statusCode}: $errorMessage');
+        throw HttpException(errorMessage);
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  
 }

@@ -3,9 +3,15 @@
 import 'package:alguiendijochamba_app_flutter/core/api/api_client.dart';
 import 'package:alguiendijochamba_app_flutter/core/di/injector.dart';
 import 'package:alguiendijochamba_app_flutter/features/auth/domain/repositories/auth_repository.dart';
+import 'package:alguiendijochamba_app_flutter/features/auth/domain/usecases/complete_profile.dart';
+import 'package:alguiendijochamba_app_flutter/features/auth/domain/usecases/upload_profile_photo.dart';
+import 'package:alguiendijochamba_app_flutter/features/auth/presentation/blocs/complete_profile_bloc.dart';
+import 'package:alguiendijochamba_app_flutter/features/auth/presentation/blocs/upload_photo_bloc.dart';
+import 'package:alguiendijochamba_app_flutter/features/auth/presentation/pages/complete_profile_page.dart';
 import 'package:alguiendijochamba_app_flutter/features/notifications/presentation/pages/notifications_page.dart';
 import 'package:alguiendijochamba_app_flutter/features/shared/widgets/placeholder_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 // --- Importaciones de Páginas ---
 import '../../features/auth/presentation/pages/register_page.dart';
@@ -78,6 +84,36 @@ class AppRouter {
           builder: (_) => SearchPage(
             searchUseCase: searchProfessionalsUseCase,
             getAllTagsUseCase: getAllTagsUseCase,
+          ),
+        );
+        
+
+      case '/complete_profile':
+        final customerId = settings.arguments as String?; 
+        
+        if (customerId == null) {
+            return MaterialPageRoute(
+              builder: (_) => const PlaceholderScreen(title: 'Error de Navegación: Customer ID no proporcionado'),
+            );
+        }
+        return MaterialPageRoute(
+          builder: (context) => MultiBlocProvider(
+            providers: [
+              // BLoC para la subida de foto (Multipart)
+              BlocProvider(
+                create: (_) => UploadPhotoBloc(
+                  uploadProfilePhoto: injector<UploadProfilePhoto>(),
+                ),
+              ),
+              // BLoC para la actualización final de preferencias (JSON)
+              BlocProvider(
+                create: (_) => CompleteProfileBloc(
+                  completeProfile: injector<CompleteProfile>(),
+                ),
+              ),
+            ],
+            // Pasamos el customerId a la página
+            child: CompleteProfilePage(customerId: customerId),
           ),
         );
         

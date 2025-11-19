@@ -5,8 +5,10 @@ import 'package:alguiendijochamba_app_flutter/core/constants.dart';
 import 'package:alguiendijochamba_app_flutter/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:alguiendijochamba_app_flutter/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:alguiendijochamba_app_flutter/features/auth/domain/repositories/auth_repository.dart';
+import 'package:alguiendijochamba_app_flutter/features/auth/domain/usecases/complete_profile.dart';
 import 'package:alguiendijochamba_app_flutter/features/auth/domain/usecases/login_user.dart';
 import 'package:alguiendijochamba_app_flutter/features/auth/domain/usecases/register_user.dart';
+import 'package:alguiendijochamba_app_flutter/features/auth/domain/usecases/upload_profile_photo.dart';
 import 'package:alguiendijochamba_app_flutter/features/notifications/data/datasources/notification_remote_data_source.dart';
 import 'package:alguiendijochamba_app_flutter/features/notifications/data/repositories/notification_repository_impl.dart';
 import 'package:alguiendijochamba_app_flutter/features/notifications/domain/repositories/notification_repository.dart';
@@ -42,6 +44,10 @@ final AuthRepository authRepository = AuthRepositoryImpl(
 );
 final LoginUser loginUserUseCase = LoginUser(authRepository); 
 final RegisterUser registerUserUseCase = RegisterUser(authRepository);
+final CompleteProfile completeProfileUseCase = CompleteProfile(authRepository); // 💡 NUEVO
+final UploadProfilePhoto uploadProfilePhotoUseCase = UploadProfilePhoto(authRepository); // 💡 NUEVO
+
+
 
 
 
@@ -93,8 +99,10 @@ final DismissNotificationUseCase dismissNotificationUseCase =
 
 T injector<T>() {
     // Autenticación
-    if (T == ApiClient) return apiClient as T; // 🛑 ¡AÑADIR ESTO!
-    if (T == AuthRepository) return authRepository as T; // 🛑 ¡AÑADIR ESTO!
+    if (T == ApiClient) return apiClient as T; 
+    if (T == AuthRepository) return authRepository as T; 
+    if (T == CompleteProfile) return completeProfileUseCase as T; 
+    if (T == UploadProfilePhoto) return uploadProfilePhotoUseCase as T; 
     if (T == LoginUser) return loginUserUseCase as T;
     if (T == RegisterUser) return registerUserUseCase as T;
     if (T == SearchCubit) return searchCubit as T;

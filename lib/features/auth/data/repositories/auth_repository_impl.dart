@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:alguiendijochamba_app_flutter/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:alguiendijochamba_app_flutter/features/auth/domain/entities/session.dart';
 import 'package:alguiendijochamba_app_flutter/features/auth/domain/entities/user.dart';
@@ -52,5 +54,34 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<String?> getCurrentUserId() async {
     // Delega la lógica de obtención al TokenStorage
     return tokenStorage.getUserId();
+  }
+
+  @override
+  Future<void> completeProfile({
+    required String customerId,
+    required int preferredPaymentMethod,
+    required bool acceptsBookingUpdates,
+    required bool acceptsPromotionsAndOffers,
+    required bool acceptsNewsletter,
+  }) async {
+    //  delegamos la llamada al Remote Data Source
+    await remoteDataSource.completeProfile(
+      customerId: customerId,
+      preferredPaymentMethod: preferredPaymentMethod,
+      acceptsBookingUpdates: acceptsBookingUpdates,
+      acceptsPromotionsAndOffers: acceptsPromotionsAndOffers,
+      acceptsNewsletter: acceptsNewsletter,
+    );
+  }
+  @override
+  Future<String> uploadProfilePhoto({
+    required String customerId,
+    required File photoFile,
+  }) async {
+    // Delega la llamada al Remote Data Source
+    return await remoteDataSource.uploadProfilePhoto(
+      customerId: customerId,
+      photoFile: photoFile,
+    );
   }
 }

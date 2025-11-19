@@ -83,7 +83,12 @@ class _RegisterPageState extends State<RegisterPage> {
         SnackBar(content: Text('User registered successfully! ID: ${user.id}')),
       );
 
-      Navigator.pushReplacementNamed(context, '/login');
+      Navigator.pushNamedAndRemoveUntil(
+        context, 
+        '/complete_profile',
+        (route) => false, 
+        arguments: user.id, 
+      );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: $e')),
