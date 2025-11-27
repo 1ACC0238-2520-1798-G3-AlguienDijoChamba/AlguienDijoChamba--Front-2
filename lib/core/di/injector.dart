@@ -15,7 +15,8 @@ import 'package:alguiendijochamba_app_flutter/features/notifications/domain/usec
 import 'package:alguiendijochamba_app_flutter/features/notifications/domain/usecases/mark_as_read_usecase.dart';
 import 'package:alguiendijochamba_app_flutter/features/search/data/datasources/professional_remote_data_source.dart';
 import 'package:alguiendijochamba_app_flutter/features/search/data/datasources/tag_remote_data_source.dart';
-import 'package:alguiendijochamba_app_flutter/features/search/data/repositories/professional_repository_impl.dart' hide ProfessionalRemoteDataSourceImpl;
+import 'package:alguiendijochamba_app_flutter/features/search/data/repositories/professional_repository_impl.dart'
+    hide ProfessionalRemoteDataSourceImpl;
 import 'package:alguiendijochamba_app_flutter/features/search/data/repositories/tag_repository_impl.dart';
 import 'package:alguiendijochamba_app_flutter/features/search/domain/repositories/professional_repository.dart';
 import 'package:alguiendijochamba_app_flutter/features/search/domain/repositories/tag_repository.dart';
@@ -34,25 +35,20 @@ import 'package:alguiendijochamba_app_flutter/features/process/domain/usecases/c
 import 'package:alguiendijochamba_app_flutter/features/process/presentation/blocs/process_bloc.dart';
 
 
-// ✨ BASE URL - ASEGÚRATE DE QUE ESTÉ EN constants.dart
-// const String BASE_URL = 'http://10.0.2.2:5000/api/v1';  // Android Emulator
-// const String BASE_URL = 'http://localhost:5000/api/v1';  // iOS Simulator
-// const String BASE_URL = 'http://192.168.x.x:5000/api/v1';  // Real device
-
-
 // 1. Almacenamiento de Tokens
 final TokenStorage tokenStorage = TokenStorageImpl();
 
 
-// 2. Cliente API (Ahora recibe el tokenStorage)
+// 2. Cliente API
 final ApiClient apiClient = ApiClient(
-  baseUrl: BASE_URL,  // ✨ ASEGÚRATE QUE BASE_URL ESTÉ CORRECTO
+  baseUrl: BASE_URL,
   tokenStorage: tokenStorage,
 );
 
 
 // AUTH
-final AuthRemoteDataSource authRemoteDataSource = AuthRemoteDataSource(apiClient: apiClient);
+final AuthRemoteDataSource authRemoteDataSource =
+    AuthRemoteDataSource(apiClient: apiClient);
 final AuthRepository authRepository = AuthRepositoryImpl(
   remoteDataSource: authRemoteDataSource,
   tokenStorage: tokenStorage,
@@ -62,15 +58,14 @@ final RegisterUser registerUserUseCase = RegisterUser(authRepository);
 
 
 // SEARCH
+final TagRemoteDataSource tagRemoteDataSource =
+    TagRemoteDataSourceImpl(apiClient);
+final TagRepository tagRepository = TagRepositoryImpl(tagRemoteDataSource);
+
 final ProfessionalRemoteDataSource professionalRemoteDataSource =
     ProfessionalRemoteDataSourceImpl(apiClient);
 final ProfessionalRepository professionalRepository =
     ProfessionalRepositoryImpl(professionalRemoteDataSource, tagRepository);
-
-
-final TagRemoteDataSource tagRemoteDataSource = TagRemoteDataSourceImpl(apiClient);
-final TagRepository tagRepository = TagRepositoryImpl(tagRemoteDataSource);
-
 
 final GetProfessionalsListUseCase getProfessionalsListUseCase =
     GetProfessionalsListUseCase(professionalRepository);
@@ -79,56 +74,91 @@ final SearchProfessionalsUseCase searchProfessionalsUseCase =
   professionalRepository,
   tagRepository,
 );
-final GetAllTagsUseCase getAllTagsUseCase = GetAllTagsUseCase(tagRepository);
-
+final GetAllTagsUseCase getAllTagsUseCase =
+    GetAllTagsUseCase(tagRepository);
 
 final SearchCubit searchCubit = SearchCubit(
   searchProfessionalsUseCase: searchProfessionalsUseCase,
 );
-
 
 final TagFilterCubit tagFilterCubit = TagFilterCubit(
   getAllTagsUseCase: getAllTagsUseCase,
 );
 
 
-//Notifications
 // NOTIFICATIONS
-final NotificationRemoteDataSource notificationRemoteDataSource = 
+final NotificationRemoteDataSource notificationRemoteDataSource =
     NotificationRemoteDataSourceImpl(apiClient);
 
-final NotificationRepository notificationRepository = 
+final NotificationRepository notificationRepository =
     NotificationRepositoryImpl(notificationRemoteDataSource);
 
-final GetNotificationsUseCase getNotificationsUseCase = 
+final GetNotificationsUseCase getNotificationsUseCase =
     GetNotificationsUseCase(notificationRepository);
-    
-final MarkAsReadUseCase markAsReadUseCase = 
+
+final MarkAsReadUseCase markAsReadUseCase =
     MarkAsReadUseCase(notificationRepository);
 
-final DismissNotificationUseCase dismissNotificationUseCase = 
+final DismissNotificationUseCase dismissNotificationUseCase =
     DismissNotificationUseCase(notificationRepository);
 
-T injector<T>() {
-    // Autenticación
-    if (T == ApiClient) return apiClient as T; // 🛑 ¡AÑADIR ESTO!
-    if (T == AuthRepository) return authRepository as T; // 🛑 ¡AÑADIR ESTO!
-    if (T == LoginUser) return loginUserUseCase as T;
-    if (T == RegisterUser) return registerUserUseCase as T;
-    if (T == SearchCubit) return searchCubit as T;
-    if (T == TagFilterCubit) return tagFilterCubit as T;
-    
-    // Búsqueda y Filtros
-    if (T == SearchProfessionalsUseCase) return searchProfessionalsUseCase as T;
-    if (T == GetAllTagsUseCase) return getAllTagsUseCase as T;
-    if (T == ProfessionalRepository) return professionalRepository as T;
-    if (T == TagRepository) return tagRepository as T;
 
-    //Notificaciones
-    if (T == GetNotificationsUseCase) return getNotificationsUseCase as T;
-    if (T == MarkAsReadUseCase) return markAsReadUseCase as T;
-    if (T == DismissNotificationUseCase) return dismissNotificationUseCase as T;
-    
-    
-    throw Exception("Dependencia no registrada: $T");
+// =====================
+// PROCESS FEATURE
+// =====================
+
+// DataSource
+final ProcessRemoteDataSource processRemoteDataSource =
+    ProcessRemoteDataSource(apiClient: apiClient);
+
+// Repository
+final ProcessRepository processRepository =
+    ProcessRepositoryImpl(remoteDataSource: processRemoteDataSource);
+
+// UseCases
+final GetProfessionalDetail getProfessionalDetailUseCase =
+    GetProfessionalDetail(processRepository);
+
+final CreateJobRequest createJobRequestUseCase =
+    CreateJobRequest(processRepository);
+
+final CompleteJob completeJobUseCase =
+    CompleteJob(processRepository);
+
+final CancelJob cancelJobUseCase =
+    CancelJob(processRepository);
+
+// ⚠️ OJO: NO creamos aquí un ProcessBloc global.
+// Cada pantalla debe crear su propio ProcessBloc con estos usecases.
+
+
+T injector<T>() {
+  // Autenticación
+  if (T == ApiClient) return apiClient as T;
+  if (T == AuthRepository) return authRepository as T;
+  if (T == LoginUser) return loginUserUseCase as T;
+  if (T == RegisterUser) return registerUserUseCase as T;
+
+  // Search
+  if (T == SearchCubit) return searchCubit as T;
+  if (T == TagFilterCubit) return tagFilterCubit as T;
+  if (T == SearchProfessionalsUseCase) return searchProfessionalsUseCase as T;
+  if (T == GetAllTagsUseCase) return getAllTagsUseCase as T;
+  if (T == ProfessionalRepository) return professionalRepository as T;
+  if (T == TagRepository) return tagRepository as T;
+
+  // Notificaciones
+  if (T == GetNotificationsUseCase) return getNotificationsUseCase as T;
+  if (T == MarkAsReadUseCase) return markAsReadUseCase as T;
+  if (T == DismissNotificationUseCase)
+    return dismissNotificationUseCase as T;
+
+  // Process (solo usecases y repo, NO el bloc)
+  if (T == ProcessRepository) return processRepository as T;
+  if (T == GetProfessionalDetail) return getProfessionalDetailUseCase as T;
+  if (T == CreateJobRequest) return createJobRequestUseCase as T;
+  if (T == CompleteJob) return completeJobUseCase as T;
+  if (T == CancelJob) return cancelJobUseCase as T;
+
+  throw Exception("Dependencia no registrada: $T");
 }

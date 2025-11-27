@@ -15,29 +15,28 @@ class MainPage extends StatefulWidget {
 
 class _MainPageState extends State<MainPage> {
   // 🛑 1. CORRECCIÓN: Solo declaramos _controller una vez
-  late PersistentTabController _controller; 
+  late PersistentTabController _controller;
   late final SearchProfessionalsUseCase searchUseCase;
   late final GetAllTagsUseCase getAllTagsUseCase;
-  // La línea 'late PersistentTabController _controller;' ha sido eliminada
 
   @override
   void initState() {
     super.initState();
     searchUseCase = injector<SearchProfessionalsUseCase>();
     getAllTagsUseCase = injector<GetAllTagsUseCase>();
-    
+
     _controller = PersistentTabController(initialIndex: 0);
   }
-  
+
   // navegacion remplazas ps
   List<Widget> _buildScreens() {
     return [
       // 🛑 2. CORRECCIÓN: Quitamos 'const' porque Home ahora recibe una variable de estado (_controller)
-      Home(controller: _controller), 
+      Home(controller: _controller),
       SearchPage(
-            searchUseCase: searchUseCase,
-            getAllTagsUseCase: getAllTagsUseCase,
-          ), 
+        searchUseCase: searchUseCase,
+        getAllTagsUseCase: getAllTagsUseCase,
+      ),
       const Scaffold(body: Center(child: Text('Process Page'))), // Process
       const Scaffold(body: Center(child: Text('Rewards Page'))), // Rewards
       const Scaffold(body: Center(child: Text('Profile Page'))), // Profile

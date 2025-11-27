@@ -6,6 +6,9 @@ import '../../domain/repositories/process_repository.dart';
 import '../widgets/professional_header_widget.dart';
 import '../widgets/payment_transaction_item.dart';
 import 'payment_success_page.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../blocs/process_bloc.dart';
+import 'payment_success_page.dart';
 
 class PaymentPage extends StatefulWidget {
   final Professional professional;
@@ -236,26 +239,23 @@ class _PaymentPageState extends State<PaymentPage> {
     );
   }
 
-  Future<void> _processPaymentLocally(double amount) async {
+Future<void> _processPaymentLocally(double amount) async {
   try {
     print('🔵 INICIO _processPaymentLocally');
-    
+
     if (!mounted) {
       print('❌ NOT MOUNTED 1');
       return;
     }
 
-    // Mostrar diálogo de carga
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (dialogContext) => const Center(
-        child: CircularProgressIndicator(),
-      ),
+      builder: (dialogContext) =>
+          const Center(child: CircularProgressIndicator()),
     );
     print('✅ Diálogo mostrado');
 
-    // Simular procesamiento de pago
     await Future.delayed(const Duration(seconds: 2));
     print('✅ Future.delayed completado');
 
@@ -264,7 +264,6 @@ class _PaymentPageState extends State<PaymentPage> {
       return;
     }
 
-    // ✅ Cerrar el diálogo
     print('🔄 Intentando cerrar diálogo...');
     Navigator.of(context, rootNavigator: true).pop();
     print('✅ Diálogo cerrado');
@@ -276,7 +275,6 @@ class _PaymentPageState extends State<PaymentPage> {
       return;
     }
 
-    // Mostrar SnackBar
     print('🔄 Mostrando SnackBar...');
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -287,7 +285,6 @@ class _PaymentPageState extends State<PaymentPage> {
     );
     print('✅ SnackBar mostrado');
 
-    // Esperar MENOS tiempo
     await Future.delayed(const Duration(seconds: 1));
     print('✅ Segundo delay completado');
 
@@ -296,16 +293,21 @@ class _PaymentPageState extends State<PaymentPage> {
       return;
     }
 
-    // Navegar a PaymentSuccessPage
+    // ✅ Tomar el bloc AQUÍ, usando el contexto de PaymentPage
+    final currentBloc = context.read<ProcessBloc>();
+
     print('🔄 Navegando a PaymentSuccessPage...');
     await Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (context) => PaymentSuccessPage(
-          professional: widget.professional,
-          job: widget.job,
-          amount: amount,
-          repository: widget.repository,
+        builder: (ctx) => BlocProvider<ProcessBloc>.value(
+          value: currentBloc,
+          child: PaymentSuccessPage(
+            professional: widget.professional,
+            job: widget.job,
+            amount: amount,
+            repository: widget.repository,
+          ),
         ),
       ),
     );
@@ -316,7 +318,6 @@ class _PaymentPageState extends State<PaymentPage> {
 
     if (!mounted) return;
 
-    // Cerrar diálogo si aún está abierto
     try {
       Navigator.of(context, rootNavigator: true).pop();
       print('✅ Diálogo cerrado en catch');

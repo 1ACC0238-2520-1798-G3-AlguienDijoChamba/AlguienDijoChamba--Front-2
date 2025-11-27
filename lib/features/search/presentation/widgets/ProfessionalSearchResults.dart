@@ -1,72 +1,86 @@
+import 'package:alguiendijochamba_app_flutter/core/di/injector.dart';
+import 'package:alguiendijochamba_app_flutter/features/process/domain/usecases/cancel_job.dart';
+import 'package:alguiendijochamba_app_flutter/features/process/domain/usecases/complete_job.dart';
+import 'package:alguiendijochamba_app_flutter/features/process/domain/usecases/create_job_request.dart';
+import 'package:alguiendijochamba_app_flutter/features/process/domain/usecases/get_professional_detail.dart';
+import 'package:alguiendijochamba_app_flutter/features/process/presentation/blocs/process_bloc.dart';
 import 'package:alguiendijochamba_app_flutter/features/search/domain/entities/search_profesional_entity.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:easy_load_more/easy_load_more.dart'; 
+import 'package:easy_load_more/easy_load_more.dart';
 // 💡 Necesitas esta importación para usar PersistentNavBarNavigator
-import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart'; 
+import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart';
 
-
-import '../cubit/search_cubit.dart'; 
-import '../cubit/search_state.dart'; 
-import 'professional_card.dart'; 
-
+import '../cubit/search_cubit.dart';
+import '../cubit/search_state.dart';
+import 'professional_card.dart';
 
 // --- IMPORTACIONES PARA PROCESS FEATURE ---
 import 'package:alguiendijochamba_app_flutter/features/process/presentation/pages/professional_detail_page.dart';
 //IMPORTS DE PROCESS
-import 'package:alguiendijochamba_app_flutter/core/di/injector.dart';
-import 'package:alguiendijochamba_app_flutter/features/process/presentation/blocs/process_bloc.dart';
+// (ya no necesitamos inyectar ni crear aquí el ProcessBloc)
 // ------------------------------------------------------------------
-
 
 class ProfessionalSearchResults extends StatelessWidget {
   const ProfessionalSearchResults({super.key});
 
-
-  // 🚀 FUNCIÓN DE NAVEGACIÓN UNIFICADA
-  void _navigateToProfile(BuildContext context, SearchedProfessionalEntity prof) {
-    PersistentNavBarNavigator.pushNewScreen(
-      context,
-      screen: BlocProvider<ProcessBloc>(
-        create: (_) => injector<ProcessBloc>(),
-        child: ProfessionalDetailPage(professionalId: prof.professionalId),
+// 🚀 FUNCIÓN DE NAVEGACIÓN UNIFICADA
+void _navigateToProfile(BuildContext context, SearchedProfessionalEntity prof) {
+  PersistentNavBarNavigator.pushNewScreen(
+    context,
+    // ✅ Aquí SÍ se provee ProcessBloc, pero construido con los usecases
+    screen: BlocProvider<ProcessBloc>(
+      create: (_) => ProcessBloc(
+        getProfessionalDetail: injector<GetProfessionalDetail>(),
+        createJobRequest: injector<CreateJobRequest>(),
+        completeJob: injector<CompleteJob>(),
+        cancelJob: injector<CancelJob>(),
       ),
-      withNavBar: false,
-      pageTransitionAnimation: PageTransitionAnimation.cupertino,
-    );
-  }
+      child: ProfessionalDetailPage(
+        professionalId: prof.professionalId,
+      ),
+    ),
+    withNavBar: false, 
+    pageTransitionAnimation: PageTransitionAnimation.cupertino,
+  );
+}
+
 
   // ✅ FUNCIÓN AUXILIAR PARA FILTRAR IDS INVÁLIDOS
-  List<SearchedProfessionalEntity> _filterValidProfessionals(List<SearchedProfessionalEntity> professionals) {
-    return professionals.where((p) => 
-      p.professionalId != null && 
-      p.professionalId.isNotEmpty && 
-      p.professionalId != '00000000-0000-0000-0000-000000000000'
-    ).toList();
+  List<SearchedProfessionalEntity> _filterValidProfessionals(
+      List<SearchedProfessionalEntity> professionals) {
+    return professionals
+        .where((p) =>
+            p.professionalId != null &&
+            p.professionalId.isNotEmpty &&
+            p.professionalId != '00000000-0000-0000-0000-000000000000')
+        .toList();
   }
-
 
   @override
   Widget build(BuildContext context) {
     final searchCubit = context.read<SearchCubit>();
 
-
     return BlocBuilder<SearchCubit, SearchState>(
       builder: (context, state) {
-        
         if (state is SearchLoading) {
           return const Center(child: CircularProgressIndicator());
         }
-        
+
         if (state is SearchError) {
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(state.message, textAlign: TextAlign.center, style: const TextStyle(color: Colors.red)),
+                Text(
+                  state.message,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.red),
+                ),
                 const SizedBox(height: 16),
                 ElevatedButton(
-                  onPressed: () => searchCubit.runSearch(newTagFilters: searchCubit.currentTagFilters),
+                  onPressed: () => searchCubit
+                      .runSearch(newTagFilters: searchCubit.currentTagFilters),
                   child: const Text('Reintentar Búsqueda'),
                 ),
               ],
@@ -74,45 +88,42 @@ class ProfessionalSearchResults extends StatelessWidget {
           );
         }
 
-
         final List<SearchedProfessionalEntity> professionals;
         final bool hasMore;
         final bool isLoadingMore = state is SearchLoadingMore;
 
-
         if (state is SearchLoaded) {
-            // ✅ FILTRAR PROFESIONALES CON IDS VÁLIDOS
-            professionals = _filterValidProfessionals(state.professionals);
-            hasMore = state.hasMore;
+          // ✅ FILTRAR PROFESIONALES CON IDS VÁLIDOS
+          professionals = _filterValidProfessionals(state.professionals);
+          hasMore = state.hasMore;
         } else if (state is SearchLoadingMore) {
-            // ✅ FILTRAR PROFESIONALES CON IDS VÁLIDOS
-            professionals = _filterValidProfessionals(state.professionals);
-            hasMore = state.hasMore;
+          // ✅ FILTRAR PROFESIONALES CON IDS VÁLIDOS
+          professionals = _filterValidProfessionals(state.professionals);
+          hasMore = state.hasMore;
         } else {
-            professionals = [];
-            hasMore = false;
+          professionals = [];
+          hasMore = false;
         }
-        
+
         if (professionals.isEmpty && !hasMore) {
           return const Center(
-            child: Text("No se encontraron profesionales con los filtros seleccionados."),
+            child: Text(
+              "No se encontraron profesionales con los filtros seleccionados.",
+            ),
           );
         }
-
 
         // Renderizar la lista con Paginación
         return EasyLoadMore(
           onLoadMore: () async {
             await searchCubit.loadMore();
-            return true; 
-          }, 
+            return true;
+          },
           isFinished: !hasMore,
-              
           child: ListView.builder(
             padding: const EdgeInsets.symmetric(vertical: 8),
-            itemCount: professionals.length + (isLoadingMore ? 1 : 0), 
+            itemCount: professionals.length + (isLoadingMore ? 1 : 0),
             itemBuilder: (context, index) {
-              
               if (index == professionals.length) {
                 return const Padding(
                   padding: EdgeInsets.symmetric(vertical: 16),
@@ -120,22 +131,20 @@ class ProfessionalSearchResults extends StatelessWidget {
                 );
               }
 
-
               final prof = professionals[index];
-
 
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 4.0),
-                child: ProfessionalCard( 
+                child: ProfessionalCard(
                   // ✅ LLAMADA A LA NAVEGACIÓN USANDO EL MÉTODO UNIFICADO
-                  onTap: () => _navigateToProfile(context, prof), 
-                  
+                  onTap: () => _navigateToProfile(context, prof),
+
                   // ASIGNACIÓN DE CAMPOS
-                  nombres: prof.userName ?? 'Profesional', 
-                  apellidos: '', 
+                  nombres: prof.userName ?? 'Profesional',
+                  apellidos: '',
                   professionalLevel: prof.professionalLevel,
                   starRating: prof.starRating,
-                  availableBalance: prof.hourlyRate, 
+                  availableBalance: prof.hourlyRate,
                   fotoPerfilUrl: prof.profilePhotoUrl ?? '',
                 ),
               );

@@ -1,6 +1,6 @@
-import 'package:alguiendijochamba_app_flutter/core/di/injector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import '../../domain/entities/professional.dart';
 import '../../domain/entities/job.dart';
 import '../blocs/process_bloc.dart';
@@ -10,21 +10,16 @@ import '../widgets/professional_header_widget.dart';
 import '../widgets/report_reason_button.dart';
 import '../widgets/payment_transaction_item.dart';
 
-
 class CancelJobPage extends StatefulWidget {
   final Professional professional;
   final Job job;
 
-  const CancelJobPage({
-    Key? key,
-    required this.professional,
-    required this.job,
-  }) : super(key: key);
+  const CancelJobPage({Key? key, required this.professional, required this.job})
+    : super(key: key);
 
   @override
   State<CancelJobPage> createState() => _CancelJobPageState();
 }
-
 
 class _CancelJobPageState extends State<CancelJobPage> {
   String? _selectedReason;
@@ -62,9 +57,8 @@ class _CancelJobPageState extends State<CancelJobPage> {
       body: BlocListener<ProcessBloc, ProcessState>(
         listener: (context, state) {
           print('🔍 CancelJobPage - Estado: $state');
-          
+
           if (state is JobCancelled) {
-            print('✅ Job Cancelado exitosamente');
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Job cancelled successfully'),
@@ -72,9 +66,11 @@ class _CancelJobPageState extends State<CancelJobPage> {
               ),
             );
             Future.delayed(const Duration(milliseconds: 500), () {
-              if (mounted) {
-                Navigator.popUntil(context, (route) => route.isFirst);
-              }
+              if (!mounted) return;
+              Navigator.of(context).pushNamedAndRemoveUntil(
+                '/main', 
+                (route) => false,
+              );
             });
           } else if (state is ProcessError) {
             print('❌ Error: ${state.message}');
@@ -93,7 +89,7 @@ class _CancelJobPageState extends State<CancelJobPage> {
             children: [
               ProfessionalHeaderWidget(professional: widget.professional),
               const SizedBox(height: 24),
-              
+
               const Text(
                 'Report',
                 style: TextStyle(
@@ -103,7 +99,7 @@ class _CancelJobPageState extends State<CancelJobPage> {
                 ),
               ),
               const SizedBox(height: 16),
-              
+
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
@@ -113,15 +109,17 @@ class _CancelJobPageState extends State<CancelJobPage> {
                     isSelected: _selectedReason == reason,
                     onTap: () {
                       setState(() {
-                        _selectedReason = _selectedReason == reason ? null : reason;
+                        _selectedReason = _selectedReason == reason
+                            ? null
+                            : reason;
                       });
                     },
                   );
                 }).toList(),
               ),
-              
+
               const SizedBox(height: 24),
-              
+
               const Text(
                 'Payments',
                 style: TextStyle(
@@ -131,7 +129,7 @@ class _CancelJobPageState extends State<CancelJobPage> {
                 ),
               ),
               const SizedBox(height: 16),
-              
+
               PaymentTransactionItem(
                 isCompleted: true,
                 title: 'Bank transfer withdrawal',
@@ -141,7 +139,7 @@ class _CancelJobPageState extends State<CancelJobPage> {
                 buttonText: 'Pay',
                 showButton: true,
               ),
-              
+
               PaymentTransactionItem(
                 isCompleted: false,
                 title: 'Bank transfer withdrawal',
@@ -151,9 +149,9 @@ class _CancelJobPageState extends State<CancelJobPage> {
                 buttonText: 'Refund',
                 showButton: true,
               ),
-              
+
               const SizedBox(height: 24),
-              
+
               SizedBox(
                 width: double.infinity,
                 height: 50,
@@ -212,7 +210,7 @@ class _CancelJobPageState extends State<CancelJobPage> {
                   color: Colors.black.withOpacity(0.1),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
-                )
+                ),
               ],
             ),
             child: Column(
@@ -255,10 +253,7 @@ class _CancelJobPageState extends State<CancelJobPage> {
                 const SizedBox(height: 12),
                 const Text(
                   'You will receive a refund shortly.',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF9E9E9E),
-                  ),
+                  style: TextStyle(fontSize: 12, color: Color(0xFF9E9E9E)),
                 ),
                 const SizedBox(height: 24),
                 Row(
@@ -288,9 +283,14 @@ class _CancelJobPageState extends State<CancelJobPage> {
                       child: ElevatedButton(
                         onPressed: () {
                           Navigator.pop(dialogContext);
-                          print('🔴 Enviando CancelActiveJob desde confirmación');
+                          print(
+                            '🔴 Enviando CancelActiveJob desde confirmación',
+                          );
                           context.read<ProcessBloc>().add(
-                            CancelActiveJob(widget.job.id, _selectedReason ?? ''),
+                            CancelActiveJob(
+                              widget.job.id,
+                              _selectedReason ?? '',
+                            ),
                           );
                         },
                         style: ElevatedButton.styleFrom(

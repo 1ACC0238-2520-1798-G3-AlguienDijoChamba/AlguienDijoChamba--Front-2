@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
 import '../../domain/entities/professional.dart';
 import '../../domain/entities/job.dart';
 import '../../domain/repositories/process_repository.dart';
+import '../blocs/process_bloc.dart';
 import 'active_job_page.dart';
 
 class PaymentSuccessPage extends StatefulWidget {
@@ -50,7 +53,6 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage>
       CurvedAnimation(parent: _animationController, curve: Curves.easeIn),
     );
 
-    // ✅ Solo reproduce una vez
     _animationController.forward();
   }
 
@@ -58,7 +60,6 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage>
     try {
       setState(() => _isSavingActiveJob = true);
 
-      // ✨ GUARDAR COMO ACTIVO AQUÍ (Después del pago)
       final jobData = {
         'jobId': widget.job.id,
         'professionalId': widget.professional.id,
@@ -76,7 +77,6 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage>
 
       print('💾 GUARDANDO ACTIVE JOB: $jobData');
       await widget.repository.saveActiveJob(jobData);
-
       print('✅ ACTIVE JOB GUARDADO EXITOSAMENTE');
     } catch (e) {
       print('❌ ERROR AL GUARDAR ACTIVE JOB: $e');
@@ -110,7 +110,7 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage>
                   child: Container(
                     width: 100,
                     height: 100,
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       color: Colors.green,
                       shape: BoxShape.circle,
                     ),
@@ -215,16 +215,25 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage>
                     child: ElevatedButton(
                       onPressed: _isSavingActiveJob
                           ? null
-                          : () => Navigator.pushReplacement(
+                          : () {
+                              final currentBloc =
+                                  context.read<ProcessBloc>(); // ✅
+
+                              Navigator.pushReplacement(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => ActiveJobPage(
-                                    professional: widget.professional,
-                                    job: widget.job,
-                                    repository: widget.repository,
+                                  builder: (context) =>
+                                      BlocProvider<ProcessBloc>.value(
+                                    value: currentBloc,
+                                    child: ActiveJobPage(
+                                      professional: widget.professional,
+                                      job: widget.job,
+                                      repository: widget.repository,
+                                    ),
                                   ),
                                 ),
-                              ),
+                              );
+                            },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF4169E1),
                         shape: RoundedRectangleBorder(
