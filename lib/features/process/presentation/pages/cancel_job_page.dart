@@ -67,10 +67,9 @@ class _CancelJobPageState extends State<CancelJobPage> {
             );
             Future.delayed(const Duration(milliseconds: 500), () {
               if (!mounted) return;
-              Navigator.of(context).pushNamedAndRemoveUntil(
-                '/main', 
-                (route) => false,
-              );
+
+              // Cierra TODAS las pantallas hasta la primera (home)
+              Navigator.of(context).popUntil((route) => route.isFirst);
             });
           } else if (state is ProcessError) {
             print('❌ Error: ${state.message}');

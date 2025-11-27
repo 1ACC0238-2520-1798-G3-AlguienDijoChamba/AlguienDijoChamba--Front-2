@@ -12,7 +12,7 @@ import 'package:flutter/material.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/search/presentation/pages/search_page.dart';
-import '../../features/home/presentation/pages/home_page.dart'; 
+import '../../features/home/presentation/pages/home_page.dart';
 
 // --- Importaciones de UseCases ---
 import '../../features/auth/domain/usecases/register_user.dart';
@@ -24,6 +24,7 @@ import '../../features/search/domain/usecases/get_all_tags_usecase.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
 import '../../features/process/presentation/blocs/process_bloc.dart';
+import '../../features/process/presentation/blocs/process_event.dart';
 import '../../features/process/presentation/pages/professional_detail_page.dart';
 import '../../features/process/domain/usecases/get_professional_detail.dart';
 import '../../features/process/domain/usecases/create_job_request.dart';
@@ -67,7 +68,17 @@ class AppRouter {
       // ----------------------------------------------------
       case '/main':
         return MaterialPageRoute(
-          builder: (_) => const MainPage(),
+          builder: (_) => BlocProvider<ProcessBloc>(
+            // 👈 un solo ProcessBloc para todo MainPage
+            create: (_) => ProcessBloc(
+              getProfessionalDetail: injector<GetProfessionalDetail>(),
+              createJobRequest: injector<CreateJobRequest>(),
+              completeJob: injector<CompleteJob>(),
+              cancelJob: injector<CancelJob>(),
+              repository: injector<ProcessRepository>(),
+            )..add(const LoadAvailableJobs()), // 👈 carga inicial
+            child: const MainPage(),
+          ),
         );
 
       // ----------------------------------------------------

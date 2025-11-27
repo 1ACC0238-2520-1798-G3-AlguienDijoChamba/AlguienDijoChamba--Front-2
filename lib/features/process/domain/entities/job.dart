@@ -1,31 +1,35 @@
-// lib/features/process/domain/entities/job.dart
-
 class Job {
   final String id;
   final String clientId;
   final String professionalId;
-  final String specialty;          // ✨ NUEVO
-  final String description;        // ✨ NUEVO
+  final String specialty;
+  final String description;
   final String address;
   final DateTime scheduledDate;
   final String scheduledHour;
   final String? additionalMessage;
-  final List<String> categories;   // ✨ NUEVO
+  final List<String> categories;
   final String paymentMethod;
   final double totalCost;
+  final String status;
+
+  // 👇 NUEVO: nombre del técnico
+  final String? professionalName;
 
   Job({
     required this.id,
     required this.clientId,
     required this.professionalId,
-    required this.specialty,        // ✨ NUEVO
-    required this.description,      // ✨ NUEVO
+    required this.specialty,
+    required this.description,
     required this.address,
     required this.scheduledDate,
     required this.scheduledHour,
     this.additionalMessage,
-    required this.categories,       // ✨ NUEVO
+    required this.categories,
     required this.paymentMethod,
     required this.totalCost,
+    required this.status,
+    this.professionalName,
   });
 }

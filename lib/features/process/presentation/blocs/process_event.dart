@@ -56,3 +56,8 @@ class CancelActiveJob extends ProcessEvent {
   @override
   List<Object?> get props => [jobId, reason];
 }
+
+// 🔹 NUEVO: cargar lista de jobs
+class LoadAvailableJobs extends ProcessEvent {
+  const LoadAvailableJobs();
+}

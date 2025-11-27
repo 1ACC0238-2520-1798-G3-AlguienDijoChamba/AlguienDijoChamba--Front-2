@@ -1,4 +1,5 @@
 import 'package:alguiendijochamba_app_flutter/core/di/injector.dart';
+import 'package:alguiendijochamba_app_flutter/features/process/domain/repositories/process_repository.dart';
 import 'package:alguiendijochamba_app_flutter/features/process/domain/usecases/cancel_job.dart';
 import 'package:alguiendijochamba_app_flutter/features/process/domain/usecases/complete_job.dart';
 import 'package:alguiendijochamba_app_flutter/features/process/domain/usecases/create_job_request.dart';
@@ -28,22 +29,23 @@ class ProfessionalSearchResults extends StatelessWidget {
 void _navigateToProfile(BuildContext context, SearchedProfessionalEntity prof) {
   PersistentNavBarNavigator.pushNewScreen(
     context,
-    // ✅ Aquí SÍ se provee ProcessBloc, pero construido con los usecases
     screen: BlocProvider<ProcessBloc>(
       create: (_) => ProcessBloc(
         getProfessionalDetail: injector<GetProfessionalDetail>(),
         createJobRequest: injector<CreateJobRequest>(),
         completeJob: injector<CompleteJob>(),
         cancelJob: injector<CancelJob>(),
+        repository: injector<ProcessRepository>(), // 👈 AÑADIDO
       ),
       child: ProfessionalDetailPage(
         professionalId: prof.professionalId,
       ),
     ),
-    withNavBar: false, 
+    withNavBar: false,
     pageTransitionAnimation: PageTransitionAnimation.cupertino,
   );
 }
+
 
 
   // ✅ FUNCIÓN AUXILIAR PARA FILTRAR IDS INVÁLIDOS

@@ -1,3 +1,4 @@
+import 'package:alguiendijochamba_app_flutter/features/process/presentation/blocs/process_event.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -151,10 +152,7 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage>
                   child: const Text(
                     'Your payment has been processed successfully',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Color(0xFF757575),
-                    ),
+                    style: TextStyle(fontSize: 16, color: Color(0xFF757575)),
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -216,24 +214,19 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage>
                       onPressed: _isSavingActiveJob
                           ? null
                           : () {
-                              final currentBloc =
-                                  context.read<ProcessBloc>(); // ✅
+                              // 1) Obtener el bloc actual
+                              final processBloc = context.read<ProcessBloc>();
 
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      BlocProvider<ProcessBloc>.value(
-                                    value: currentBloc,
-                                    child: ActiveJobPage(
-                                      professional: widget.professional,
-                                      job: widget.job,
-                                      repository: widget.repository,
-                                    ),
-                                  ),
-                                ),
+                              // 2) Recargar la lista de jobs
+                              processBloc.add(const LoadAvailableJobs());
+
+                              // 3) Ir a /main y limpiar el stack
+                              Navigator.of(context).pushNamedAndRemoveUntil(
+                                '/main',
+                                (route) => false,
                               );
                             },
+
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF4169E1),
                         shape: RoundedRectangleBorder(
@@ -267,10 +260,7 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage>
       children: [
         Text(
           label,
-          style: const TextStyle(
-            fontSize: 14,
-            color: Color(0xFF757575),
-          ),
+          style: const TextStyle(fontSize: 14, color: Color(0xFF757575)),
         ),
         Text(
           value,

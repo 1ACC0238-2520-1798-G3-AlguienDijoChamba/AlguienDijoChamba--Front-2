@@ -1,3 +1,5 @@
+// lib/features/process/presentation/blocs/process_bloc.dart
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'process_event.dart';
 import 'process_state.dart';
@@ -5,31 +7,34 @@ import '../../domain/usecases/get_professional_detail.dart';
 import '../../domain/usecases/create_job_request.dart';
 import '../../domain/usecases/complete_job.dart';
 import '../../domain/usecases/cancel_job.dart';
-
+import '../../domain/repositories/process_repository.dart';
 
 class ProcessBloc extends Bloc<ProcessEvent, ProcessState> {
   final GetProfessionalDetail getProfessionalDetail;
   final CreateJobRequest createJobRequest;
   final CompleteJob completeJob;
   final CancelJob cancelJob;
+  final ProcessRepository repository; // 🔹 para getAvailableJobs()
 
   ProcessBloc({
     required this.getProfessionalDetail,
     required this.createJobRequest,
     required this.completeJob,
     required this.cancelJob,
-  }) : super(ProcessInitial()) {
+    required this.repository,
+  }) : super(const ProcessInitial()) {
     on<LoadProfessionalDetail>(_onLoadProfessionalDetail);
     on<CreateJob>(_onCreateJob);
     on<FinishJob>(_onFinishJob);
     on<CancelActiveJob>(_onCancelJob);
+    on<LoadAvailableJobs>(_onLoadAvailableJobs); // 🔹 nuevo
   }
 
   Future<void> _onLoadProfessionalDetail(
     LoadProfessionalDetail event,
     Emitter<ProcessState> emit,
   ) async {
-    emit(ProcessLoading());
+    emit(const ProcessLoading());
     print('📄 BLOC: Cargando profesional ${event.professionalId}');
 
     final result = await getProfessionalDetail(event.professionalId);
@@ -46,8 +51,11 @@ class ProcessBloc extends Bloc<ProcessEvent, ProcessState> {
     );
   }
 
-  Future<void> _onCreateJob(CreateJob event, Emitter<ProcessState> emit) async {
-    emit(ProcessLoading());
+  Future<void> _onCreateJob(
+    CreateJob event,
+    Emitter<ProcessState> emit,
+  ) async {
+    emit(const ProcessLoading());
     print('📝 BLOC: Creando job con datos: ${event.jobData}');
 
     final result = await createJobRequest(event.jobData);
@@ -66,42 +74,98 @@ class ProcessBloc extends Bloc<ProcessEvent, ProcessState> {
       },
     );
   }
-Future<void> _onFinishJob(FinishJob event, Emitter<ProcessState> emit) async {
-  emit(ProcessLoading());
-  print('🏁 BLOC: Completando job ${event.jobId}');
 
-  final result = await completeJob(event.jobId, event.rating, event.review);
+  Future<void> _onFinishJob(
+    FinishJob event,
+    Emitter<ProcessState> emit,
+  ) async {
+    emit(const ProcessLoading());
+    print('🏁 BLOC: Completando job ${event.jobId}');
 
-  result.fold(
-    (failure) {
-      print('❌ BLOC ERROR: ${failure.toString()}');
-      emit(ProcessError(failure.toString()));
-    },
-    (_) {
-      print('✅ BLOC: JOB COMPLETADO');
-      emit(JobCompleted());
-    },
-  );
-}
+    final result = await completeJob(event.jobId, event.rating, event.review);
 
+    await result.fold(
+      (failure) async {
+        print('❌ BLOC ERROR: ${failure.toString()}');
+        emit(ProcessError(failure.toString()));
+      },
+      (_) async {
+        print('✅ BLOC: JOB COMPLETADO');
+        emit(const JobCompleted());
+
+        // 🔁 recargar lista de jobs después de completar
+        print('DEBUG BLOC: recargando jobs después de JobCompleted');
+        final jobsResult = await repository.getAvailableJobs();
+        jobsResult.fold(
+          (f) {
+            print('❌ BLOC ERROR recarga: ${f.toString()}');
+            emit(ProcessError(f.toString()));
+          },
+          (jobs) {
+            print('DEBUG BLOC: recarga -> ${jobs.length} jobs');
+            emit(JobsLoaded(jobs));
+          },
+        );
+      },
+    );
+  }
 
   Future<void> _onCancelJob(
     CancelActiveJob event,
     Emitter<ProcessState> emit,
   ) async {
-    emit(ProcessLoading());
+    emit(const ProcessLoading());
     print('🚫 BLOC: Cancelando job ${event.jobId}');
 
     final result = await cancelJob(event.jobId, event.reason);
+
+    await result.fold(
+      (failure) async {
+        print('❌ BLOC ERROR: ${failure.toString()}');
+        emit(ProcessError(failure.toString()));
+      },
+      (_) async {
+        print('✅ BLOC: JOB CANCELADO');
+        emit(const JobCancelled());
+
+        // 🔁 recargar lista de jobs después de cancelar
+        print('DEBUG BLOC: recargando jobs después de JobCancelled');
+        final jobsResult = await repository.getAvailableJobs();
+        jobsResult.fold(
+          (f) {
+            print('❌ BLOC ERROR recarga: ${f.toString()}');
+            emit(ProcessError(f.toString()));
+          },
+          (jobs) {
+            print('DEBUG BLOC: recarga -> ${jobs.length} jobs');
+            emit(JobsLoaded(jobs));
+          },
+        );
+      },
+    );
+  }
+
+  // 🔹 NUEVO: cargar lista de jobs desde repository.getAvailableJobs()
+  Future<void> _onLoadAvailableJobs(
+    LoadAvailableJobs event,
+    Emitter<ProcessState> emit,
+  ) async {
+    print('DEBUG BLOC: LoadAvailableJobs recibido'); // 👈 NUEVO
+
+    emit(const ProcessLoading());
+    print('📋 BLOC: Cargando lista de jobs disponibles');
+
+    final result = await repository.getAvailableJobs();
 
     result.fold(
       (failure) {
         print('❌ BLOC ERROR: ${failure.toString()}');
         emit(ProcessError(failure.toString()));
       },
-      (_) {
-        print('✅ BLOC: JOB CANCELADO');
-        emit(JobCancelled());
+      (jobs) {
+        print('DEBUG BLOC: LoadAvailableJobs -> ${jobs.length} jobs'); // 👈 NUEVO
+        print('✅ BLOC: Jobs cargados (${jobs.length})');
+        emit(JobsLoaded(jobs));
       },
     );
   }

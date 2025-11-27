@@ -32,6 +32,7 @@ import 'package:alguiendijochamba_app_flutter/features/process/domain/usecases/g
 import 'package:alguiendijochamba_app_flutter/features/process/domain/usecases/create_job_request.dart';
 import 'package:alguiendijochamba_app_flutter/features/process/domain/usecases/complete_job.dart';
 import 'package:alguiendijochamba_app_flutter/features/process/domain/usecases/cancel_job.dart';
+// ⚠️ IMPORTADO SOLO PARA EL TIPO EN EXCEPCIÓN / DOC, NO SE REGISTRA AQUI
 import 'package:alguiendijochamba_app_flutter/features/process/presentation/blocs/process_bloc.dart';
 
 
@@ -129,7 +130,7 @@ final CancelJob cancelJobUseCase =
     CancelJob(processRepository);
 
 // ⚠️ OJO: NO creamos aquí un ProcessBloc global.
-// Cada pantalla debe crear su propio ProcessBloc con estos usecases.
+// Cada pantalla debe crear su propio ProcessBloc con estos usecases y el repository.
 
 
 T injector<T>() {
@@ -159,6 +160,9 @@ T injector<T>() {
   if (T == CreateJobRequest) return createJobRequestUseCase as T;
   if (T == CompleteJob) return completeJobUseCase as T;
   if (T == CancelJob) return cancelJobUseCase as T;
+
+  // ⚠️ Importante: aquí NO se registra ProcessBloc, por eso se ve en la excepción.
+  // Las pantallas deben crear ProcessBloc con BlocProvider usando estos casos de uso.
 
   throw Exception("Dependencia no registrada: $T");
 }

@@ -40,7 +40,6 @@ class _FinishReviewPageState extends State<FinishReviewPage> {
 
   @override
   Widget build(BuildContext context) {
-    // ✅ Aquí NO se crea un Bloc nuevo. Se usa el que viene desde ActiveJobPage
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
@@ -67,10 +66,8 @@ class _FinishReviewPageState extends State<FinishReviewPage> {
             );
             Future.delayed(const Duration(milliseconds: 500), () {
               if (!mounted) return;
-              Navigator.of(context).pushNamedAndRemoveUntil(
-                '/main',
-                (route) => false,
-              );
+
+              Navigator.of(context).popUntil((route) => route.isFirst);
             });
           } else if (state is ProcessError) {
             ScaffoldMessenger.of(
@@ -83,11 +80,9 @@ class _FinishReviewPageState extends State<FinishReviewPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Professional Header
               ProfessionalHeaderWidget(professional: widget.professional),
-
               const SizedBox(height: 24),
-              // Description Section - Job Categories
+
               const Text(
                 'Description',
                 style: TextStyle(
@@ -98,7 +93,6 @@ class _FinishReviewPageState extends State<FinishReviewPage> {
               ),
               const SizedBox(height: 16),
 
-              // Job Category Chips
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
@@ -121,7 +115,6 @@ class _FinishReviewPageState extends State<FinishReviewPage> {
 
               const SizedBox(height: 24),
 
-              // Star Rating Section
               const Text(
                 'Rating',
                 style: TextStyle(
@@ -132,7 +125,6 @@ class _FinishReviewPageState extends State<FinishReviewPage> {
               ),
               const SizedBox(height: 16),
 
-              // Stars (0-5)
               StarRatingWidget(
                 maxRating: 5,
                 onRatingChanged: (rating) {
@@ -145,7 +137,6 @@ class _FinishReviewPageState extends State<FinishReviewPage> {
 
               const SizedBox(height: 24),
 
-              // Message Section
               const Text(
                 'Message',
                 style: TextStyle(
@@ -173,7 +164,6 @@ class _FinishReviewPageState extends State<FinishReviewPage> {
 
               const SizedBox(height: 32),
 
-              // Finish Review Button
               SizedBox(
                 width: double.infinity,
                 height: 50,

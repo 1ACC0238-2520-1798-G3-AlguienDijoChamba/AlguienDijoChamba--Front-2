@@ -5,7 +5,6 @@ import '../../domain/entities/professional.dart';
 import '../../domain/entities/job.dart';
 import '../../domain/entities/payment.dart';
 
-
 abstract class ProcessState extends Equatable {
   const ProcessState();
 
@@ -56,6 +55,16 @@ class JobCompleted extends ProcessState {
 
 class JobCancelled extends ProcessState {
   const JobCancelled();
+}
+
+// 🔹 NUEVO: lista de jobs disponibles
+class JobsLoaded extends ProcessState {
+  final List<Job> jobs;
+
+  const JobsLoaded(this.jobs);
+
+  @override
+  List<Object?> get props => [jobs];
 }
 
 // ✨ Estados para Pagos
