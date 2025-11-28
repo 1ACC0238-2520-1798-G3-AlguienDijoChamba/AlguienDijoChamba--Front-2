@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../widgets/reward_card.dart';
 import '../widgets/reward_activity_item.dart';
+import '../pages/level_info_page.dart'; // IMPORTANTE
 
 class RewardPage extends StatelessWidget {
   const RewardPage({super.key});
@@ -23,53 +24,65 @@ class RewardPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header Card
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF9CA6F5), Color(0xFF4B6FEA)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+            // -----------------------
+            // HEADER CARD CLICKABLE
+            // -----------------------
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const LevelInfoPage(),
+                  ),
+                );
+              },
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF9CA6F5), Color(0xFF4B6FEA)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
                 ),
-              ),
-              child: Column(
-                children: [
-                  const Text(
-                    '🏆 Silver Member',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                child: Column(
+                  children: [
+                    const Text(
+                      '🏆 Silver Member',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    '750 Reward Points',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 28,
-                      fontWeight: FontWeight.w800,
+                    const SizedBox(height: 8),
+                    const Text(
+                      '750 Reward Points',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 28,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'Progress to Gold: 250 points to go',
-                    style: TextStyle(color: Colors.white70),
-                  ),
-                  const SizedBox(height: 12),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: LinearProgressIndicator(
-                      value: 0.75,
-                      backgroundColor: Colors.white24,
-                      color: Colors.yellowAccent,
-                      minHeight: 8,
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Progress to Gold: 250 points to go',
+                      style: TextStyle(color: Colors.white70),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 12),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: LinearProgressIndicator(
+                        value: 0.75,
+                        backgroundColor: Colors.white24,
+                        color: Colors.yellowAccent,
+                        minHeight: 8,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
 
