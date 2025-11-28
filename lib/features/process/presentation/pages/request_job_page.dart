@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import '../../domain/entities/professional.dart';
 import '../../domain/repositories/process_repository.dart';
 import '../blocs/process_bloc.dart';
@@ -50,6 +51,7 @@ class _RequestJobPageState extends State<RequestJobPage> {
     print('   - ID: ${widget.professional.id}');
     print('   - Name: ${widget.professional.fullName}');
     print('   - Specialty: ${widget.professional.specialties}');
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
@@ -71,21 +73,25 @@ class _RequestJobPageState extends State<RequestJobPage> {
       body: BlocConsumer<ProcessBloc, ProcessState>(
         listener: (context, state) {
           if (state is JobCreated) {
-            // 🚀 Navega a PaymentPageWrapper para esperar confirmación del técnico
+            // ✅ Reusar el mismo ProcessBloc para PaymentPage
+            final currentBloc = context.read<ProcessBloc>();
+
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => PaymentPageWrapper(
-                  professional: widget.professional,
-                  job: state.job,
-                  repository: widget.repository,
+                builder: (context) => BlocProvider<ProcessBloc>.value(
+                  value: currentBloc,
+                  child: PaymentPage(
+                    professional: widget.professional,
+                    job: state.job,
+                    repository: widget.repository,
+                  ),
                 ),
               ),
             );
           } else if (state is ProcessError) {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text(state.message)));
+            ScaffoldMessenger.of(context)
+                .showSnackBar(SnackBar(content: Text(state.message)));
           }
         },
         builder: (context, state) {
@@ -95,9 +101,7 @@ class _RequestJobPageState extends State<RequestJobPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildProfessionalHeaderWithRate(),
-
                 const SizedBox(height: 24),
-
                 const Text(
                   'Job',
                   style: TextStyle(
@@ -115,14 +119,12 @@ class _RequestJobPageState extends State<RequestJobPage> {
                       (category) => JobCategoryChip(
                         label: category['label'],
                         backgroundColor: category['color'],
-                        isSelected: _selectedCategories.contains(
-                          category['label'],
-                        ),
+                        isSelected:
+                            _selectedCategories.contains(category['label']),
                         onTap: () {
                           setState(() {
-                            if (_selectedCategories.contains(
-                              category['label'],
-                            )) {
+                            if (_selectedCategories
+                                .contains(category['label'])) {
                               _selectedCategories.remove(category['label']);
                             } else {
                               _selectedCategories.add(category['label']);
@@ -153,9 +155,7 @@ class _RequestJobPageState extends State<RequestJobPage> {
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 24),
-
                 const Text(
                   'Payment Method',
                   style: TextStyle(
@@ -184,22 +184,17 @@ class _RequestJobPageState extends State<RequestJobPage> {
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 24),
-
                 _buildTextField(
                   'Address',
                   Icons.location_on,
                   _addressController,
                 ),
                 const SizedBox(height: 16),
-
-                _buildTimePickerField(),
+                _buildTextField('Hour', Icons.access_time, _hourController),
                 const SizedBox(height: 16),
-
                 _buildDatePickerField(),
                 const SizedBox(height: 16),
-
                 const Text(
                   'Message',
                   style: TextStyle(
@@ -222,9 +217,7 @@ class _RequestJobPageState extends State<RequestJobPage> {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 32),
-
                 SizedBox(
                   width: double.infinity,
                   height: 50,
@@ -297,7 +290,11 @@ class _RequestJobPageState extends State<RequestJobPage> {
     );
   }
 
-  Widget _buildPaymentMethodCard(String title, IconData icon, bool isSelected) {
+  Widget _buildPaymentMethodCard(
+    String title,
+    IconData icon,
+    bool isSelected,
+  ) {
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -318,9 +315,8 @@ class _RequestJobPageState extends State<RequestJobPage> {
             Icon(
               icon,
               size: 32,
-              color: isSelected
-                  ? const Color(0xFF4169E1)
-                  : const Color(0xFF757575),
+              color:
+                  isSelected ? const Color(0xFF4169E1) : const Color(0xFF757575),
             ),
             const SizedBox(height: 8),
             Text(
@@ -331,7 +327,8 @@ class _RequestJobPageState extends State<RequestJobPage> {
                 color: isSelected
                     ? const Color(0xFF4169E1)
                     : const Color(0xFF757575),
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                fontWeight:
+                    isSelected ? FontWeight.bold : FontWeight.normal,
               ),
             ),
           ],
@@ -399,7 +396,7 @@ class _RequestJobPageState extends State<RequestJobPage> {
               setState(() {
                 _selectedDate = picked;
                 _dateController.text =
-                    "${picked.day}/${picked.month}/${picked.year}";
+                    '${picked.day}/${picked.month}/${picked.year}';
               });
             }
           },
@@ -499,28 +496,6 @@ class _RequestJobPageState extends State<RequestJobPage> {
       return;
     }
 
-    if (_selectedDate == null || _selectedTime == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select date and time')),
-      );
-      return;
-    }
-
-    // 2. Obtener ID del usuario (Asíncrono)
-    final tokenStorage = injector<TokenStorage>();
-    final currentUserId = await tokenStorage.getUserId();
-
-    // 🛑 SEGURIDAD: Verificar si el widget sigue vivo antes de usar 'context'
-    if (!mounted) return; 
-
-    if (currentUserId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error: User session not found. Please login again.')),
-      );
-      return;
-    }
-
-    // 3. Preparar datos
     final scheduledDateTime = DateTime(
       _selectedDate!.year,
       _selectedDate!.month,
@@ -531,9 +506,9 @@ class _RequestJobPageState extends State<RequestJobPage> {
 
     final jobData = {
       'professionalId': widget.professional.id.toString(),
-      'customerId': currentUserId, // ✅ CORRECTO
-      'specialty': widget.professional.specialties.isNotEmpty
-          ? widget.professional.specialties.first
+      'customerId': widget.professional.id.toString(),
+      'specialty': widget.professional.specialties?.isNotEmpty == true
+          ? widget.professional.specialties!.first
           : 'General',
       'description': _selectedCategories.join(', '),
       'address': _addressController.text,

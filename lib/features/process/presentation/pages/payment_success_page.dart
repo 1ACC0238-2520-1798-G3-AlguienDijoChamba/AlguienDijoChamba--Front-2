@@ -1,7 +1,11 @@
+import 'package:alguiendijochamba_app_flutter/features/process/presentation/blocs/process_event.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
 import '../../domain/entities/professional.dart';
 import '../../domain/entities/job.dart';
 import '../../domain/repositories/process_repository.dart';
+import '../blocs/process_bloc.dart';
 import 'active_job_page.dart';
 
 class PaymentSuccessPage extends StatefulWidget {
@@ -50,7 +54,6 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage>
       CurvedAnimation(parent: _animationController, curve: Curves.easeIn),
     );
 
-    // ✅ Solo reproduce una vez
     _animationController.forward();
   }
 
@@ -58,7 +61,6 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage>
     try {
       setState(() => _isSavingActiveJob = true);
 
-      // ✨ GUARDAR COMO ACTIVO AQUÍ (Después del pago)
       final jobData = {
         'jobId': widget.job.id,
         'professionalId': widget.professional.id,
@@ -76,7 +78,6 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage>
 
       print('💾 GUARDANDO ACTIVE JOB: $jobData');
       await widget.repository.saveActiveJob(jobData);
-
       print('✅ ACTIVE JOB GUARDADO EXITOSAMENTE');
     } catch (e) {
       print('❌ ERROR AL GUARDAR ACTIVE JOB: $e');
@@ -110,7 +111,7 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage>
                   child: Container(
                     width: 100,
                     height: 100,
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       color: Colors.green,
                       shape: BoxShape.circle,
                     ),
@@ -151,10 +152,7 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage>
                   child: const Text(
                     'Your payment has been processed successfully',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Color(0xFF757575),
-                    ),
+                    style: TextStyle(fontSize: 16, color: Color(0xFF757575)),
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -215,16 +213,20 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage>
                     child: ElevatedButton(
                       onPressed: _isSavingActiveJob
                           ? null
-                          : () => Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => ActiveJobPage(
-                                    professional: widget.professional,
-                                    job: widget.job,
-                                    repository: widget.repository,
-                                  ),
-                                ),
-                              ),
+                          : () {
+                              // 1) Obtener el bloc actual
+                              final processBloc = context.read<ProcessBloc>();
+
+                              // 2) Recargar la lista de jobs
+                              processBloc.add(const LoadAvailableJobs());
+
+                              // 3) Ir a /main y limpiar el stack
+                              Navigator.of(context).pushNamedAndRemoveUntil(
+                                '/main',
+                                (route) => false,
+                              );
+                            },
+
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF4169E1),
                         shape: RoundedRectangleBorder(
@@ -258,10 +260,7 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage>
       children: [
         Text(
           label,
-          style: const TextStyle(
-            fontSize: 14,
-            color: Color(0xFF757575),
-          ),
+          style: const TextStyle(fontSize: 14, color: Color(0xFF757575)),
         ),
         Text(
           value,

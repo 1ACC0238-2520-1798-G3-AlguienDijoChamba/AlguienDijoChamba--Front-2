@@ -7,18 +7,18 @@ import 'package:alguiendijochamba_app_flutter/features/auth/domain/usecases/regi
 import 'package:alguiendijochamba_app_flutter/features/auth/domain/usecases/login_user.dart';
 import 'package:alguiendijochamba_app_flutter/features/search/domain/usecases/search_professionals_usecase.dart';
 import 'package:alguiendijochamba_app_flutter/features/search/domain/usecases/get_all_tags_usecase.dart';
-
-// --- 🛑 IMPORTACIONES FALTANTES (AGREGA ESTAS DOS) ---
-import 'package:alguiendijochamba_app_flutter/core/storage/token_storage.dart'; // Para TokenStorage
-import 'package:alguiendijochamba_app_flutter/core/api/signalr_service.dart';   // Para SignalRService
+import 'package:alguiendijochamba_app_flutter/features/profile/domain/usecases/get_profile.dart';
+import 'package:alguiendijochamba_app_flutter/features/profile/domain/usecases/update_profile.dart';
 
 // Define/Asigna las instancias necesarias para AppRouter
 final RegisterUser registerUserUseCase = injector<RegisterUser>();
 final LoginUser loginUserUseCase = injector<LoginUser>();
 final SearchProfessionalsUseCase searchProfessionalsUseCase = injector<SearchProfessionalsUseCase>();
 final GetAllTagsUseCase getAllTagsUseCase = injector<GetAllTagsUseCase>();
+final GetProfile getProfileUseCase = injector<GetProfile>();
+final UpdateProfile updateProfileUseCase = injector<UpdateProfile>();
 
-void main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Inicializa AppRouter y dependencias
@@ -27,23 +27,10 @@ void main() async {
     loginUser: loginUserUseCase,
     searchProfessionalsUseCase: searchProfessionalsUseCase,
     getAllTagsUseCase: getAllTagsUseCase,
+    getProfile: getProfileUseCase,
+    updateProfile: updateProfileUseCase,
   );
-
-  // 🛑 NUEVO: Intentar reconectar SignalR si hay sesión activa
-  // Ahora 'TokenStorage' será reconocido gracias al import
-  final tokenStorage = injector<TokenStorage>(); 
-  final token = await tokenStorage.getToken();
-
-  if (token != null && token.isNotEmpty) {
-    print("🔄 Main: Sesión detectada, conectando SignalR...");
-    try {
-      // Ahora 'SignalRService' será reconocido gracias al import
-      injector<SignalRService>().connect(); 
-    } catch (e) {
-      print("Error conectando SignalR al inicio: $e");
-    }
-  }
-
+  
   runApp(MyApp(appRouter: appRouter));
 }
 

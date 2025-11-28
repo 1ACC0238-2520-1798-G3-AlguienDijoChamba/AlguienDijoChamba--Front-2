@@ -16,39 +16,52 @@ class JobModel extends Job {
     required List<String> categories,
     required String paymentMethod,
     required double totalCost,
+    required String status,
+    String? professionalName, // 👈 NUEVO
   }) : super(
-    id: id,
-    clientId: clientId,
-    professionalId: professionalId,
-    specialty: specialty,
-    description: description,
-    address: address,
-    scheduledDate: scheduledDate,
-    scheduledHour: scheduledHour,
-    additionalMessage: additionalMessage,
-    categories: categories,
-    paymentMethod: paymentMethod,
-    totalCost: totalCost,
-  );
+          id: id,
+          clientId: clientId,
+          professionalId: professionalId,
+          specialty: specialty,
+          description: description,
+          address: address,
+          scheduledDate: scheduledDate,
+          scheduledHour: scheduledHour,
+          additionalMessage: additionalMessage,
+          categories: categories,
+          paymentMethod: paymentMethod,
+          totalCost: totalCost,
+          status: status,
+          professionalName: professionalName,
+        );
 
   factory JobModel.fromJson(Map<String, dynamic> json) {
     print('🔍 JobModel.fromJson recibido: $json');
-    
+
     return JobModel(
-      id: json['id'] as String? ?? json['_id'] as String? ?? 'unknown_${DateTime.now().millisecondsSinceEpoch}',
-      clientId: json['clientId'] as String? ?? json['customerId'] as String? ?? '',
+      id: json['id'] as String? ??
+          json['_id'] as String? ??
+          'unknown_${DateTime.now().millisecondsSinceEpoch}',
+      clientId: json['clientId'] as String? ??
+          json['customerId'] as String? ??
+          '',
       professionalId: json['professionalId'] as String? ?? '',
       specialty: json['specialty'] as String? ?? '',
       description: json['description'] as String? ?? '',
       address: json['address'] as String? ?? '',
-      scheduledDate: json['scheduledDate'] != null 
-        ? DateTime.parse(json['scheduledDate'] as String)
-        : DateTime.now(),
+      scheduledDate: json['scheduledDate'] != null
+          ? DateTime.parse(json['scheduledDate'] as String)
+          : DateTime.now(),
       scheduledHour: json['scheduledHour'] as String? ?? '',
       additionalMessage: json['additionalMessage'] as String?,
-      categories: List<String>.from(json['categories'] as List<dynamic>? ?? []),
+      categories:
+          List<String>.from(json['categories'] as List<dynamic>? ?? []),
       paymentMethod: json['paymentMethod'] as String? ?? '',
       totalCost: (json['totalCost'] as num?)?.toDouble() ?? 0.0,
+      status: json['status'] as String? ??
+          json['Status'] as String? ??
+          'Accepted',
+      professionalName: json['professionalName'] as String?, // backend futuro
     );
   }
 
@@ -66,6 +79,8 @@ class JobModel extends Job {
       'categories': categories,
       'paymentMethod': paymentMethod,
       'totalCost': totalCost,
+      'status': status,
+      'professionalName': professionalName,
     };
   }
 }

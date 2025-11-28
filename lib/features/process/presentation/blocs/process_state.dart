@@ -5,7 +5,6 @@ import '../../domain/entities/professional.dart';
 import '../../domain/entities/job.dart';
 import '../../domain/entities/payment.dart';
 
-
 abstract class ProcessState extends Equatable {
   const ProcessState();
 
@@ -58,38 +57,14 @@ class JobCancelled extends ProcessState {
   const JobCancelled();
 }
 
-class JobAcceptedShowPayment extends ProcessState {
-  final String jobId;
-  final String professionalId;
-  final double proposedCost;
+// 🔹 NUEVO: lista de jobs disponibles
+class JobsLoaded extends ProcessState {
+  final List<Job> jobs;
 
-  const JobAcceptedShowPayment({
-    required this.jobId,
-    required this.professionalId,
-    required this.proposedCost,
-  });
+  const JobsLoaded(this.jobs);
 
   @override
-  List<Object?> get props => [jobId, professionalId, proposedCost];
-}
-
-// ✨ Estados para SignalR - Notificaciones de técnicos
-class JobAcceptedByTechnician extends ProcessState {
-  final String jobId;
-
-  const JobAcceptedByTechnician(this.jobId);
-
-  @override
-  List<Object?> get props => [jobId];
-}
-
-class JobDeclinedByTechnician extends ProcessState {
-  final String jobId;
-
-  const JobDeclinedByTechnician(this.jobId);
-
-  @override
-  List<Object?> get props => [jobId];
+  List<Object?> get props => [jobs];
 }
 
 // ✨ Estados para Pagos
