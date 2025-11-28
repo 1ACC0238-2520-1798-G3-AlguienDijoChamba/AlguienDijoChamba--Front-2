@@ -29,7 +29,7 @@ class SearchProfessionalsUseCase {
     // 2. Construir la Query Final
     // Inyectamos los IDs de profesionales obtenidos (si hay tags), manteniendo
     // el resto de los parámetros (searchTerm, page, limit).
-    final finalQuery = query.copyWith(
+    query.copyWith(
       professionalIds: professionalIdsToFilter,
       // Nota: Eliminamos el 'tagIds' de la query final si ya usamos 'professionalIds',
       // ya que la API de /reputation espera solo uno o el otro. 

@@ -61,3 +61,21 @@ class CancelActiveJob extends ProcessEvent {
 class LoadAvailableJobs extends ProcessEvent {
   const LoadAvailableJobs();
 }
+
+// 🔹 NUEVO: evento para actualizaciones de SignalR
+class JobStatusUpdatedByHub extends ProcessEvent {
+  final String jobId;
+  final String status;
+  final String? professionalId;
+  final double? proposedCost;
+
+  const JobStatusUpdatedByHub({
+    required this.jobId,
+    required this.status,
+    this.professionalId,
+    this.proposedCost,
+  });
+
+  @override
+  List<Object?> get props => [jobId, status, professionalId, proposedCost];
+}

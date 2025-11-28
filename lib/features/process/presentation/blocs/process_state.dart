@@ -67,6 +67,32 @@ class JobsLoaded extends ProcessState {
   List<Object?> get props => [jobs];
 }
 
+// 🔹 NUEVO: job aceptado por el técnico (mostrar pantalla de pago)
+class JobAcceptedShowPayment extends ProcessState {
+  final String jobId;
+  final String professionalId;
+  final double proposedCost;
+
+  const JobAcceptedShowPayment({
+    required this.jobId,
+    required this.professionalId,
+    required this.proposedCost,
+  });
+
+  @override
+  List<Object?> get props => [jobId, professionalId, proposedCost];
+}
+
+// 🔹 NUEVO: job rechazado por el técnico
+class JobDeclinedByTechnician extends ProcessState {
+  final String jobId;
+
+  const JobDeclinedByTechnician(this.jobId);
+
+  @override
+  List<Object?> get props => [jobId];
+}
+
 // ✨ Estados para Pagos
 class PaymentProcessed extends ProcessState {
   final Payment payment;

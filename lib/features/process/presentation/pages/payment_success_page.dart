@@ -6,7 +6,6 @@ import '../../domain/entities/professional.dart';
 import '../../domain/entities/job.dart';
 import '../../domain/repositories/process_repository.dart';
 import '../blocs/process_bloc.dart';
-import 'active_job_page.dart';
 
 class PaymentSuccessPage extends StatefulWidget {
   final Professional professional;

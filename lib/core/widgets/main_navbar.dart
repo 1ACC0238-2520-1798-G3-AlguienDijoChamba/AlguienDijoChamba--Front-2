@@ -28,8 +28,6 @@ class _MainPageState extends State<MainPage> {
   late final SearchProfessionalsUseCase searchUseCase;
   late final GetAllTagsUseCase getAllTagsUseCase;
 
-  static const int processTabIndex = 2; // Home=0, Search=1, Process=2
-
   @override
   void initState() {
     super.initState();

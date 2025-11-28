@@ -53,7 +53,6 @@ void _navigateToProfile(BuildContext context, SearchedProfessionalEntity prof) {
       List<SearchedProfessionalEntity> professionals) {
     return professionals
         .where((p) =>
-            p.professionalId != null &&
             p.professionalId.isNotEmpty &&
             p.professionalId != '00000000-0000-0000-0000-000000000000')
         .toList();

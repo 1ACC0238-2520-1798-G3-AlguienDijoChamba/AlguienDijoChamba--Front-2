@@ -133,7 +133,6 @@ class NotificationCardWidget extends StatelessWidget {
     // Usamos el senderName que viene del backend
     final String displayTitle = _buildTitle(notification.type, notification.senderName);
 
-    const double contentWidth = 222.48; 
     const double contentLeftPosition = 79.99; 
 
     return GestureDetector(

@@ -26,7 +26,7 @@ class TagRemoteDataSourceImpl implements TagRemoteDataSource {
     }
 
     // Mapeo a TagModel
-    return (responseData as List)
+    return responseData
         .map((jsonItem) => TagModel.fromJson(jsonItem as Map<String, dynamic>))
         .toList();
   }
@@ -41,6 +41,6 @@ class TagRemoteDataSourceImpl implements TagRemoteDataSource {
     }
 
     // El endpoint devuelve una lista de IDs (String), los mapeamos directamente
-    return (responseData as List).map((e) => e.toString()).toList();
+    return responseData.map((e) => e.toString()).toList();
   }
 }

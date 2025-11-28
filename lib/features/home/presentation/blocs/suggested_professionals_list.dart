@@ -84,8 +84,7 @@ class SuggestedProfessionalsList extends StatelessWidget {
                           child: ProfessionalCard(
                             nombres: names[0],
                             apellidos: names[1],
-                            professionalLevel:
-                                p.professionalLevel ?? 'Nivel Desconocido',
+                            professionalLevel: p.professionalLevel,
                             starRating: p.starRating,
                             availableBalance: p.hourlyRate,
                             fotoPerfilUrl: p.profilePhotoUrl,

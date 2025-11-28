@@ -9,8 +9,6 @@ import '../blocs/process_state.dart';
 import '../widgets/professional_header_widget.dart';
 import '../widgets/job_category_chip.dart';
 import 'payment_page.dart';
-import 'package:alguiendijochamba_app_flutter/core/storage/token_storage.dart';
-import 'package:alguiendijochamba_app_flutter/core/di/injector.dart';
 
 
 class RequestJobPage extends StatefulWidget {
@@ -422,68 +420,6 @@ class _RequestJobPageState extends State<RequestJobPage> {
     );
   }
 
-  // --- CORRECCIÓN IMAGEN 4: Implementar TimePicker ---
-  Widget _buildTimePickerField() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Hour (Formato 24H)',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF212121),
-          ),
-        ),
-        const SizedBox(height: 12),
-        GestureDetector(
-          onTap: () async {
-            final pickedTime = await showTimePicker(
-              context: context,
-              initialTime: _selectedTime ?? TimeOfDay.now(),
-              // Usar formato 24 horas
-              builder: (context, child) {
-                return MediaQuery(
-                  data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
-                  child: child!,
-                );
-              },
-            );
-            if (pickedTime != null) {
-              setState(() {
-                _selectedTime = pickedTime;
-                // Formatea a "HH:mm" (ej. "14:30")
-                _hourController.text = "${pickedTime.hour.toString().padLeft(2, '0')}:${pickedTime.minute.toString().padLeft(2, '0')}";
-              });
-            }
-          },
-          child: TextField(
-            controller: _hourController,
-            enabled: false, // El campo no se edita manualmente
-            decoration: InputDecoration(
-              hintText: 'Select a time (HH:mm)',
-              prefixIcon: const Icon(
-                Icons.access_time,
-                color: Color(0xFF757575),
-              ),
-              filled: true,
-              fillColor: Colors.white,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
-              ),
-              disabledBorder: OutlineInputBorder( // Borde cuando está deshabilitado
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-  // --------------------------------------------------
-
   void _submitJobRequest() async {
     // 1. Validaciones visuales
     if (_addressController.text.isEmpty ||
@@ -507,8 +443,8 @@ class _RequestJobPageState extends State<RequestJobPage> {
     final jobData = {
       'professionalId': widget.professional.id.toString(),
       'customerId': widget.professional.id.toString(),
-      'specialty': widget.professional.specialties?.isNotEmpty == true
-          ? widget.professional.specialties!.first
+      'specialty': widget.professional.specialties.isNotEmpty
+          ? widget.professional.specialties.first
           : 'General',
       'description': _selectedCategories.join(', '),
       'address': _addressController.text,

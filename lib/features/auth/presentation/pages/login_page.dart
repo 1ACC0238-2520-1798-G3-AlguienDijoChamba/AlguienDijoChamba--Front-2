@@ -6,9 +6,7 @@ import 'package:alguiendijochamba_app_flutter/features/auth/domain/usecases/logi
 import 'package:alguiendijochamba_app_flutter/features/auth/domain/entities/session.dart';
 import 'package:alguiendijochamba_app_flutter/features/shared/widgets/TopBar.dart';
 import 'package:alguiendijochamba_app_flutter/features/auth/presentation/widgets/text_field.dart';
-import 'package:alguiendijochamba_app_flutter/core/widgets/main_navbar.dart';
-import 'package:alguiendijochamba_app_flutter/core/api/signalr_service.dart'; 
-import 'package:alguiendijochamba_app_flutter/core/di/injector.dart'; 
+import 'package:alguiendijochamba_app_flutter/core/widgets/main_navbar.dart'; 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 

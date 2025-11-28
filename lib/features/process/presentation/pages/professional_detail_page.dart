@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../domain/entities/professional.dart';
 import '../../domain/repositories/process_repository.dart';
 import '../blocs/process_bloc.dart';
 import '../blocs/process_event.dart';

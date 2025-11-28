@@ -28,6 +28,7 @@ class ProcessBloc extends Bloc<ProcessEvent, ProcessState> {
     on<FinishJob>(_onFinishJob);
     on<CancelActiveJob>(_onCancelJob);
     on<LoadAvailableJobs>(_onLoadAvailableJobs); // 🔹 nuevo
+    on<JobStatusUpdatedByHub>(_onJobStatusUpdatedByHub); // 🔹 nuevo
   }
 
   Future<void> _onLoadProfessionalDetail(

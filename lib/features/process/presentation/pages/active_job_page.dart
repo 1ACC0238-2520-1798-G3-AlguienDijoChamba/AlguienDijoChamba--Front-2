@@ -5,7 +5,6 @@ import '../../domain/entities/professional.dart';
 import '../../domain/entities/job.dart';
 import '../../domain/repositories/process_repository.dart';
 import '../blocs/process_bloc.dart';
-import '../blocs/process_state.dart';
 import '../widgets/professional_header_widget.dart';
 import 'finish_review_page.dart';
 import 'cancel_job_page.dart';

@@ -1,16 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:alguiendijochamba_app_flutter/core/di/injector.dart';
 import '../../domain/entities/professional.dart';
 import '../../domain/entities/job.dart';
 import '../../domain/repositories/process_repository.dart';
 import '../blocs/process_bloc.dart';
-import '../blocs/process_state.dart';
 import '../widgets/professional_header_widget.dart';
 import '../widgets/payment_transaction_item.dart';
-import 'payment_success_page.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import '../blocs/process_bloc.dart';
 import 'payment_success_page.dart';
 
 class PaymentPage extends StatefulWidget {
