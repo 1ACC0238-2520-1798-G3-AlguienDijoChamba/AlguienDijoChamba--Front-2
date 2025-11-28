@@ -11,6 +11,7 @@ import 'package:alguiendijochamba_app_flutter/features/process/presentation/page
 import 'package:alguiendijochamba_app_flutter/features/search/domain/usecases/get_all_tags_usecase.dart';
 import 'package:alguiendijochamba_app_flutter/features/search/domain/usecases/search_professionals_usecase.dart';
 import 'package:alguiendijochamba_app_flutter/features/search/presentation/pages/search_page.dart';
+import 'package:alguiendijochamba_app_flutter/features/profile/presentation/pages/profile_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart';
@@ -39,12 +40,16 @@ class _MainPageState extends State<MainPage> {
 
   List<Widget> _buildScreens() {
     return [
+      // 🏠 Tab Home
       Home(controller: _controller),
+      
+      // 🔍 Tab Search
       SearchPage(
         searchUseCase: searchUseCase,
         getAllTagsUseCase: getAllTagsUseCase,
       ),
-      // 🟦 Tab Process: lista de jobs
+      
+      // 📋 Tab Process: lista de jobs
       BlocProvider<ProcessBloc>(
         create: (_) => ProcessBloc(
           getProfessionalDetail: injector<GetProfessionalDetail>(),
@@ -52,13 +57,17 @@ class _MainPageState extends State<MainPage> {
           completeJob: injector<CompleteJob>(),
           cancelJob: injector<CancelJob>(),
           repository: injector<ProcessRepository>(),
-        )..add(const LoadAvailableJobs()), // 👈 carga inicial del tab
+        )..add(const LoadAvailableJobs()),
         child: JobsListPage(
           repository: injector<ProcessRepository>(),
         ),
       ),
+      
+      // 🎁 Tab Rewards
       const Scaffold(body: Center(child: Text('Rewards Page'))),
-      const Scaffold(body: Center(child: Text('Profile Page'))),
+      
+      // 👤 Tab Profile (ACTUALIZADO)
+      const ProfilePage(),
     ];
   }
 
@@ -116,9 +125,10 @@ class _MainPageState extends State<MainPage> {
       stateManagement: true,
       hideNavigationBarWhenKeyboardAppears: true,
       navBarStyle: NavBarStyle.style3,
-      // ❌ quitamos context.read<ProcessBloc>() porque este context no ve
-      // el bloc local del tab Process
-      onItemSelected: (index) {},
+      onItemSelected: (index) {
+        // Opcional: lógica adicional al cambiar de tab
+        debugPrint('Tab seleccionado: $index');
+      },
     );
   }
 }

@@ -10,4 +10,6 @@ class GetAvailableJobs {
   Future<Either<Failure, List<Job>>> call() {
     return repository.getAvailableJobs();
   }
+  
 }
+  

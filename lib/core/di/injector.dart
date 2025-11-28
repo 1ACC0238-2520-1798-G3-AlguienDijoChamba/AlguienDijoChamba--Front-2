@@ -13,10 +13,10 @@ import 'package:alguiendijochamba_app_flutter/features/notifications/domain/repo
 import 'package:alguiendijochamba_app_flutter/features/notifications/domain/usecases/dismiss_notification_usecase.dart';
 import 'package:alguiendijochamba_app_flutter/features/notifications/domain/usecases/get_notifications_usecase.dart';
 import 'package:alguiendijochamba_app_flutter/features/notifications/domain/usecases/mark_as_read_usecase.dart';
+import 'package:alguiendijochamba_app_flutter/features/profile/data/repositories/profile_repository_impl.dart';
 import 'package:alguiendijochamba_app_flutter/features/search/data/datasources/professional_remote_data_source.dart';
 import 'package:alguiendijochamba_app_flutter/features/search/data/datasources/tag_remote_data_source.dart';
-import 'package:alguiendijochamba_app_flutter/features/search/data/repositories/professional_repository_impl.dart'
-    hide ProfessionalRemoteDataSourceImpl;
+import 'package:alguiendijochamba_app_flutter/features/search/data/repositories/professional_repository_impl.dart';
 import 'package:alguiendijochamba_app_flutter/features/search/data/repositories/tag_repository_impl.dart';
 import 'package:alguiendijochamba_app_flutter/features/search/domain/repositories/professional_repository.dart';
 import 'package:alguiendijochamba_app_flutter/features/search/domain/repositories/tag_repository.dart';
@@ -32,13 +32,16 @@ import 'package:alguiendijochamba_app_flutter/features/process/domain/usecases/g
 import 'package:alguiendijochamba_app_flutter/features/process/domain/usecases/create_job_request.dart';
 import 'package:alguiendijochamba_app_flutter/features/process/domain/usecases/complete_job.dart';
 import 'package:alguiendijochamba_app_flutter/features/process/domain/usecases/cancel_job.dart';
-// ⚠️ IMPORTADO SOLO PARA EL TIPO EN EXCEPCIÓN / DOC, NO SE REGISTRA AQUI
-import 'package:alguiendijochamba_app_flutter/features/process/presentation/blocs/process_bloc.dart';
-
+// =====================
+// PROFILE FEATURE
+// =====================
+import 'package:alguiendijochamba_app_flutter/features/profile/data/datasources/profile_remote_data_source.dart';
+import 'package:alguiendijochamba_app_flutter/features/profile/domain/repositories/profile_repository.dart';
+import 'package:alguiendijochamba_app_flutter/features/profile/domain/usecases/get_profile.dart';
+import 'package:alguiendijochamba_app_flutter/features/profile/domain/usecases/update_profile.dart';
 
 // 1. Almacenamiento de Tokens
 final TokenStorage tokenStorage = TokenStorageImpl();
-
 
 // 2. Cliente API
 final ApiClient apiClient = ApiClient(
@@ -46,10 +49,10 @@ final ApiClient apiClient = ApiClient(
   tokenStorage: tokenStorage,
 );
 
-
 // AUTH
-final AuthRemoteDataSource authRemoteDataSource =
-    AuthRemoteDataSource(apiClient: apiClient);
+final AuthRemoteDataSource authRemoteDataSource = AuthRemoteDataSource(
+  apiClient: apiClient,
+);
 final AuthRepository authRepository = AuthRepositoryImpl(
   remoteDataSource: authRemoteDataSource,
   tokenStorage: tokenStorage,
@@ -57,10 +60,10 @@ final AuthRepository authRepository = AuthRepositoryImpl(
 final LoginUser loginUserUseCase = LoginUser(authRepository);
 final RegisterUser registerUserUseCase = RegisterUser(authRepository);
 
-
 // SEARCH
-final TagRemoteDataSource tagRemoteDataSource =
-    TagRemoteDataSourceImpl(apiClient);
+final TagRemoteDataSource tagRemoteDataSource = TagRemoteDataSourceImpl(
+  apiClient,
+);
 final TagRepository tagRepository = TagRepositoryImpl(tagRemoteDataSource);
 
 final ProfessionalRemoteDataSource professionalRemoteDataSource =
@@ -71,12 +74,8 @@ final ProfessionalRepository professionalRepository =
 final GetProfessionalsListUseCase getProfessionalsListUseCase =
     GetProfessionalsListUseCase(professionalRepository);
 final SearchProfessionalsUseCase searchProfessionalsUseCase =
-    SearchProfessionalsUseCase(
-  professionalRepository,
-  tagRepository,
-);
-final GetAllTagsUseCase getAllTagsUseCase =
-    GetAllTagsUseCase(tagRepository);
+    SearchProfessionalsUseCase(professionalRepository, tagRepository);
+final GetAllTagsUseCase getAllTagsUseCase = GetAllTagsUseCase(tagRepository);
 
 final SearchCubit searchCubit = SearchCubit(
   searchProfessionalsUseCase: searchProfessionalsUseCase,
@@ -86,7 +85,6 @@ final TagFilterCubit tagFilterCubit = TagFilterCubit(
   getAllTagsUseCase: getAllTagsUseCase,
 );
 
-
 // NOTIFICATIONS
 final NotificationRemoteDataSource notificationRemoteDataSource =
     NotificationRemoteDataSourceImpl(apiClient);
@@ -94,46 +92,71 @@ final NotificationRemoteDataSource notificationRemoteDataSource =
 final NotificationRepository notificationRepository =
     NotificationRepositoryImpl(notificationRemoteDataSource);
 
-final GetNotificationsUseCase getNotificationsUseCase =
-    GetNotificationsUseCase(notificationRepository);
+final GetNotificationsUseCase getNotificationsUseCase = GetNotificationsUseCase(
+  notificationRepository,
+);
 
-final MarkAsReadUseCase markAsReadUseCase =
-    MarkAsReadUseCase(notificationRepository);
+final MarkAsReadUseCase markAsReadUseCase = MarkAsReadUseCase(
+  notificationRepository,
+);
 
 final DismissNotificationUseCase dismissNotificationUseCase =
     DismissNotificationUseCase(notificationRepository);
-
 
 // =====================
 // PROCESS FEATURE
 // =====================
 
 // DataSource
-final ProcessRemoteDataSource processRemoteDataSource =
-    ProcessRemoteDataSource(apiClient: apiClient);
+final ProcessRemoteDataSource processRemoteDataSource = ProcessRemoteDataSource(
+  apiClient: apiClient,
+);
 
 // Repository
-final ProcessRepository processRepository =
-    ProcessRepositoryImpl(remoteDataSource: processRemoteDataSource);
+final ProcessRepository processRepository = ProcessRepositoryImpl(
+  remoteDataSource: processRemoteDataSource,
+);
 
 // UseCases
 final GetProfessionalDetail getProfessionalDetailUseCase =
     GetProfessionalDetail(processRepository);
 
-final CreateJobRequest createJobRequestUseCase =
-    CreateJobRequest(processRepository);
+final CreateJobRequest createJobRequestUseCase = CreateJobRequest(
+  processRepository,
+);
 
-final CompleteJob completeJobUseCase =
-    CompleteJob(processRepository);
+final CompleteJob completeJobUseCase = CompleteJob(processRepository);
 
-final CancelJob cancelJobUseCase =
-    CancelJob(processRepository);
+final CancelJob cancelJobUseCase = CancelJob(processRepository);
 
 // ⚠️ OJO: NO creamos aquí un ProcessBloc global.
 // Cada pantalla debe crear su propio ProcessBloc con estos usecases y el repository.
 
+// =====================
+// PROFILE FEATURE
+// =====================
+
+// DataSource
+final ProfileRemoteDataSource profileRemoteDataSource = ProfileRemoteDataSource(
+  apiClient: apiClient,
+);
+
+// Repository
+final ProfileRepository profileRepository = ProfileRepositoryImpl(
+  remoteDataSource: profileRemoteDataSource,
+);
+
+// UseCases
+final GetProfile getProfileUseCase = GetProfile(profileRepository);
+
+final UpdateProfile updateProfileUseCase = UpdateProfile(profileRepository);
+
+// ⚠️ OJO: NO creamos aquí un ProfileBloc global.
+// Cada pantalla debe crear su propio ProfileBloc con estos usecases y el repository.
 
 T injector<T>() {
+  // Token Storage
+  if (T == TokenStorage) return tokenStorage as T;
   // Autenticación
   if (T == ApiClient) return apiClient as T;
   if (T == AuthRepository) return authRepository as T;
@@ -151,8 +174,7 @@ T injector<T>() {
   // Notificaciones
   if (T == GetNotificationsUseCase) return getNotificationsUseCase as T;
   if (T == MarkAsReadUseCase) return markAsReadUseCase as T;
-  if (T == DismissNotificationUseCase)
-    return dismissNotificationUseCase as T;
+  if (T == DismissNotificationUseCase) return dismissNotificationUseCase as T;
 
   // Process (solo usecases y repo, NO el bloc)
   if (T == ProcessRepository) return processRepository as T;
@@ -161,8 +183,13 @@ T injector<T>() {
   if (T == CompleteJob) return completeJobUseCase as T;
   if (T == CancelJob) return cancelJobUseCase as T;
 
-  // ⚠️ Importante: aquí NO se registra ProcessBloc, por eso se ve en la excepción.
-  // Las pantallas deben crear ProcessBloc con BlocProvider usando estos casos de uso.
+  // Profile (solo usecases y repo, NO el bloc)
+  if (T == ProfileRepository) return profileRepository as T;
+  if (T == GetProfile) return getProfileUseCase as T;
+  if (T == UpdateProfile) return updateProfileUseCase as T;
+
+  // ⚠️ Importante: aquí NO se registran ProfileBloc ni ProcessBloc.
+  // Las pantallas deben crear sus propios bloques con BlocProvider usando estos casos de uso.
 
   throw Exception("Dependencia no registrada: $T");
 }

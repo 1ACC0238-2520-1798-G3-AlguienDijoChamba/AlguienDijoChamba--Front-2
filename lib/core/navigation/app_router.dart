@@ -1,5 +1,3 @@
-// Archivo: AppRouter.dart
-
 import 'package:alguiendijochamba_app_flutter/core/api/api_client.dart';
 import 'package:alguiendijochamba_app_flutter/core/di/injector.dart';
 import 'package:alguiendijochamba_app_flutter/core/widgets/main_navbar.dart';
@@ -19,6 +17,8 @@ import '../../features/auth/domain/usecases/register_user.dart';
 import '../../features/auth/domain/usecases/login_user.dart';
 import '../../features/search/domain/usecases/search_professionals_usecase.dart';
 import '../../features/search/domain/usecases/get_all_tags_usecase.dart';
+import '../../features/profile/domain/usecases/get_profile.dart';
+import '../../features/profile/domain/usecases/update_profile.dart';
 
 // --- Importaciones para PROCESS FEATURE ---
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -37,19 +37,23 @@ class AppRouter {
   final LoginUser loginUser;
   final SearchProfessionalsUseCase searchProfessionalsUseCase;
   final GetAllTagsUseCase getAllTagsUseCase;
+  final GetProfile getProfile;
+  final UpdateProfile updateProfile;
 
   AppRouter({
     required this.registerUser,
     required this.loginUser,
     required this.searchProfessionalsUseCase,
     required this.getAllTagsUseCase,
+    required this.getProfile,
+    required this.updateProfile,
   });
 
   Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
-      // ----------------------------------------------------
+      // ────────────────────────────────────────────────────────
       // RUTAS DE AUTENTICACIÓN
-      // ----------------------------------------------------
+      // ────────────────────────────────────────────────────────
       case '/register':
         return MaterialPageRoute(
           builder: (_) => RegisterPage(registerUser: registerUser),
@@ -63,27 +67,26 @@ class AppRouter {
           ),
         );
 
-      // ----------------------------------------------------
+      // ────────────────────────────────────────────────────────
       // RUTA PRINCIPAL (HOME CON BOTTOM NAV)
-      // ----------------------------------------------------
+      // ────────────────────────────────────────────────────────
       case '/main':
         return MaterialPageRoute(
           builder: (_) => BlocProvider<ProcessBloc>(
-            // 👈 un solo ProcessBloc para todo MainPage
             create: (_) => ProcessBloc(
               getProfessionalDetail: injector<GetProfessionalDetail>(),
               createJobRequest: injector<CreateJobRequest>(),
               completeJob: injector<CompleteJob>(),
               cancelJob: injector<CancelJob>(),
               repository: injector<ProcessRepository>(),
-            )..add(const LoadAvailableJobs()), // 👈 carga inicial
+            )..add(const LoadAvailableJobs()),
             child: const MainPage(),
           ),
         );
 
-      // ----------------------------------------------------
+      // ────────────────────────────────────────────────────────
       // RUTA DE BÚSQUEDA
-      // ----------------------------------------------------
+      // ────────────────────────────────────────────────────────
       case '/search_page':
         return MaterialPageRoute(
           builder: (_) => SearchPage(
@@ -92,13 +95,12 @@ class AppRouter {
           ),
         );
 
-      // ----------------------------------------------------
+      // ────────────────────────────────────────────────────────
       // OTRAS RUTAS DE LA APP (Placeholder temporalmente)
-      // ----------------------------------------------------
+      // ────────────────────────────────────────────────────────
       case '/plans_and_benefits':
         return MaterialPageRoute(
-          builder: (_) =>
-              const PlaceholderScreen(title: 'Planes y Beneficios'),
+          builder: (_) => const PlaceholderScreen(title: 'Planes y Beneficios'),
         );
       case '/notifications':
         return MaterialPageRoute(
@@ -108,14 +110,10 @@ class AppRouter {
         return MaterialPageRoute(
           builder: (_) => const PlaceholderScreen(title: 'Chat'),
         );
-      case '/profile_page_full':
-        return MaterialPageRoute(
-          builder: (_) => const PlaceholderScreen(title: 'Mi Perfil'),
-        );
 
-      // ----------------------------------------------------
+      // ────────────────────────────────────────────────────────
       // RUTA POR DEFECTO / ERROR
-      // ----------------------------------------------------
+      // ────────────────────────────────────────────────────────
       default:
         return MaterialPageRoute(
           builder: (_) => Scaffold(
