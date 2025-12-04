@@ -36,7 +36,6 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage>
   void initState() {
     super.initState();
     _setupAnimations();
-    _saveActiveJobAfterPayment();
   }
 
   void _setupAnimations() {

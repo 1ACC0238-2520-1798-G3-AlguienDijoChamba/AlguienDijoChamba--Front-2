@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+// Imports necesarios para la inyección de dependencias y almacenamiento
+import 'package:alguiendijochamba_app_flutter/core/storage/token_storage.dart';
+import 'package:alguiendijochamba_app_flutter/core/di/injector.dart';
+
 import '../../domain/entities/professional.dart';
 import '../../domain/entities/job.dart';
 import '../../domain/repositories/process_repository.dart';
@@ -94,7 +98,7 @@ class _PaymentPageState extends State<PaymentPage> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
+                      color: Colors.white.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(
@@ -215,6 +219,7 @@ class _PaymentPageState extends State<PaymentPage> {
               width: double.infinity,
               height: 50,
               child: ElevatedButton(
+                // 🛑 Acción del botón Pay: Llama a la función que conecta con el Backend
                 onPressed: () => _processPaymentLocally(advancePayment),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF4169E1),
@@ -240,96 +245,122 @@ class _PaymentPageState extends State<PaymentPage> {
     );
   }
 
-Future<void> _processPaymentLocally(double amount) async {
-  try {
-    print('🔵 INICIO _processPaymentLocally');
-
-    if (!mounted) {
-      print('❌ NOT MOUNTED 1');
-      return;
-    }
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) =>
-          const Center(child: CircularProgressIndicator()),
-    );
-    print('✅ Diálogo mostrado');
-
-    await Future.delayed(const Duration(seconds: 2));
-    print('✅ Future.delayed completado');
-
-    if (!mounted) {
-      print('❌ NOT MOUNTED 2');
-      return;
-    }
-
-    print('🔄 Intentando cerrar diálogo...');
-    Navigator.of(context, rootNavigator: true).pop();
-    print('✅ Diálogo cerrado');
-
-    print('✅ Pago procesado exitosamente');
-
-    if (!mounted) {
-      print('❌ NOT MOUNTED 3');
-      return;
-    }
-
-    print('🔄 Mostrando SnackBar...');
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('✅ Payment processed successfully!'),
-        backgroundColor: Colors.green,
-        duration: Duration(seconds: 1),
-      ),
-    );
-    print('✅ SnackBar mostrado');
-
-    await Future.delayed(const Duration(seconds: 1));
-    print('✅ Segundo delay completado');
-
-    if (!mounted) {
-      print('❌ NOT MOUNTED 4');
-      return;
-    }
-
-    // ✅ Tomar el bloc AQUÍ, usando el contexto de PaymentPage
-    final currentBloc = context.read<ProcessBloc>();
-
-    print('🔄 Navegando a PaymentSuccessPage...');
-    await Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (ctx) => BlocProvider<ProcessBloc>.value(
-          value: currentBloc,
-          child: PaymentSuccessPage(
-            professional: widget.professional,
-            job: widget.job,
-            amount: amount,
-            repository: widget.repository,
-          ),
-        ),
-      ),
-    );
-    print('✅ Navegación completada');
-  } catch (e, stackTrace) {
-    print('❌ ERROR COMPLETO: $e');
-    print('❌ STACKTRACE: $stackTrace');
-
-    if (!mounted) return;
-
+  // ---------------------------------------------------------------------------
+  // 🟢 LÓGICA DE PAGO Y ENVÍO AL BACKEND
+  // ---------------------------------------------------------------------------
+  Future<void> _processPaymentLocally(double amount) async {
     try {
-      Navigator.of(context, rootNavigator: true).pop();
-      print('✅ Diálogo cerrado en catch');
-    } catch (e) {
-      print('⚠️ No se pudo cerrar diálogo: $e');
-    }
+      print('🔵 INICIO: Procesando pago y enviando solicitud...');
 
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
-    );
+      if (!mounted) return;
+
+      // 1. Mostrar diálogo de carga
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) =>
+            const Center(child: CircularProgressIndicator()),
+      );
+
+      // 2. Obtener el ID del cliente logueado
+      final tokenStorage = injector<TokenStorage>();
+      final realCustomerId =
+          await tokenStorage.getUserId() ?? 'unknown_customer';
+
+      // 3. Preparar el objeto JSON para el backend
+      // El backend espera 'totalCost', que es lo que enviará a Android vía SignalR
+      final jobData = {
+        'professionalId': widget.professional.id,
+        'customerId': realCustomerId, // ID real del usuario
+        'specialty': widget.job.specialty,
+        'description': widget.job.description,
+        'address': widget.job.address,
+        'scheduledDate': widget.job.scheduledDate.toIso8601String(),
+        'scheduledHour': widget.job.scheduledHour,
+        'additionalMessage': widget.job.additionalMessage ?? '',
+        'categories': widget.job.categories,
+        'paymentMethod': 'Credit/Debit Card',
+        'totalCost': amount, // 💰 PRECIO QUE VERÁ EL TÉCNICO EN ANDROID
+      };
+
+      print('🚀 Enviando solicitud al Backend: $jobData');
+
+      // 4. Llamar al repositorio para guardar el Job (esto dispara SignalR en backend)
+      final result = await widget.repository.saveActiveJob(jobData);
+
+      // 5. Cerrar diálogo de carga (verificando si el widget sigue montado)
+      if (mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+      }
+
+      // 6. Manejar el resultado
+      result.fold(
+        (failure) {
+          // CASO ERROR
+          print('❌ Error al enviar solicitud: ${failure.message}');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Error: ${failure.message}'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        },
+        (jobCreated) async {
+          // CASO ÉXITO
+          print('✅ Solicitud enviada exitosamente. SignalR notificado.');
+
+          if (!mounted) return;
+
+          // Mostrar confirmación visual rápida
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('✅ Payment processed & Request sent!'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 1),
+            ),
+          );
+
+          // Navegar a la página de éxito
+          // Importante: Pasamos el Bloc actual para mantener el estado
+          final currentBloc = context.read<ProcessBloc>();
+
+          await Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (ctx) => BlocProvider<ProcessBloc>.value(
+                value: currentBloc,
+                child: PaymentSuccessPage(
+                  professional: widget.professional,
+                  job: widget.job,
+                  amount: amount,
+                  repository: widget.repository,
+                ),
+              ),
+            ),
+          );
+        },
+      );
+    } catch (e, stackTrace) {
+      // MANEJO DE EXCEPCIONES CRÍTICAS
+      print('❌ ERROR COMPLETO: $e');
+      print('❌ STACKTRACE: $stackTrace');
+
+      if (mounted) {
+        // Intentar cerrar el diálogo si quedó abierto por error
+        try {
+          if (Navigator.canPop(context)) {
+            Navigator.of(context, rootNavigator: true).pop();
+          }
+        } catch (_) {}
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('Error inesperado: $e'),
+              backgroundColor: Colors.red),
+        );
+      }
+    }
   }
-}
 }
