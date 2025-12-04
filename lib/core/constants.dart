@@ -3,7 +3,7 @@
 // Descomenta la línea que corresponda a tu entorno:
 
 // 1️⃣ BACKEND DEPLOYADO (Producción/Staging) - Usa esto para conectarte a tu servidor en la nube
-const String BASE_URL = 'http://localhost:5000/api/v1';  // 🚀 REEMPLAZA CON TU URL
+const String BASE_URL = 'http://127.0.0.1:5000/api/v1';  // 🚀 REEMPLAZA CON TU URL
 // Ejemplo: const String BASE_URL = 'https://mi-backend.azurewebsites.net/api/v1';
 // Ejemplo: const String BASE_URL = 'https://api.miapp.com/api/v1';
 

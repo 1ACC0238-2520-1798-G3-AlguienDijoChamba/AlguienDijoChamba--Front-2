@@ -63,7 +63,7 @@ class _MainPageState extends State<MainPage> {
       ),
       
       // 🎁 Tab Rewards
-      const Scaffold(body: Center(child: Text('Rewards Page'))),
+      const RewardPage(),
       
       // 👤 Tab Profile (ACTUALIZADO)
       const ProfilePage(),

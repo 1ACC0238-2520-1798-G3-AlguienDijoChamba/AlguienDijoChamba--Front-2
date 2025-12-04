@@ -220,7 +220,7 @@ class _LoginPageState extends State<LoginPage> {
                 const SizedBox(height: 16),
                 RichText(
                   text: TextSpan(
-                    text: 'Forgot your password?',
+                    text: '',
                     style: const TextStyle(
                       color: Color(0xFF006AFF),
                       fontSize: 14,

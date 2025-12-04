@@ -72,14 +72,6 @@ class HomeHeader extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           
-          // 🛑 PERFIL
-          _buildCircularIconButton(
-            Icons.account_circle_outlined, 
-            // Aunque /profile es una pestaña, es mejor manejarlo como una ruta
-            // para que se abra como pantalla completa si se accede desde aquí.
-            () => Navigator.of(context, rootNavigator: true).pushNamed('/profile_page_full') 
-            // Nota: Usaré '/profile_page_full' para diferenciar de la pestaña /profile si existiera
-          ),
         ],
       ),
       ],
