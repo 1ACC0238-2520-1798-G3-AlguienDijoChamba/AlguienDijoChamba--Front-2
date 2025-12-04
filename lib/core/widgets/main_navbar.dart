@@ -15,6 +15,7 @@ import 'package:alguiendijochamba_app_flutter/features/profile/presentation/page
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart';
+import 'package:alguiendijochamba_app_flutter/features/reward/presentation/pages/reward_page.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});

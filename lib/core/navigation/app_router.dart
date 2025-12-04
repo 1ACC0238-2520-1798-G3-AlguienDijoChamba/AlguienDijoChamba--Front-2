@@ -10,6 +10,9 @@ import 'package:flutter/material.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/search/presentation/pages/search_page.dart';
+// import '../../features/professionals/presentation/pages/professional_details_page.dart';
+import '../../features/reward/presentation/pages/reward_page.dart'; 
+
 
 // --- Importaciones de UseCases ---
 import '../../features/auth/domain/usecases/register_user.dart';
@@ -107,8 +110,17 @@ class AppRouter {
         return MaterialPageRoute(
           builder: (_) => const PlaceholderScreen(title: 'Chat'),
         );
-
-      // ────────────────────────────────────────────────────────
+      case '/profile_page_full':
+        return MaterialPageRoute(
+          builder: (_) => const PlaceholderScreen(title: 'Mi Perfil'),
+        );
+      case '/rewards':
+        return MaterialPageRoute(
+          builder: (_) => const RewardPage(),
+        );
+        
+      
+      // ----------------------------------------------------
       // RUTA POR DEFECTO / ERROR
       // ────────────────────────────────────────────────────────
       default:
