@@ -9,6 +9,8 @@ import '../blocs/process_state.dart';
 import '../widgets/professional_header_widget.dart';
 import '../widgets/job_category_chip.dart';
 import 'payment_page.dart';
+import 'package:alguiendijochamba_app_flutter/core/di/injector.dart';
+import 'package:alguiendijochamba_app_flutter/core/storage/token_storage.dart';
 
 class RequestJobPage extends StatefulWidget {
   final Professional professional;
@@ -26,12 +28,12 @@ class RequestJobPage extends StatefulWidget {
 
 class _RequestJobPageState extends State<RequestJobPage> {
   final _addressController = TextEditingController();
-  late TextEditingController _hourController; // Modificado para inicializar en initState
+  late TextEditingController _hourController; 
   final _dateController = TextEditingController();
   final _messageController = TextEditingController();
   
   DateTime? _selectedDate;
-  // ✅ CORRECCIÓN 1: Inicializamos con la hora actual para evitar error de nulos
+  // Inicializamos con la hora actual para evitar nulos
   TimeOfDay _selectedTime = TimeOfDay.now(); 
 
   String _selectedPaymentMethod = 'Credit/Debit Card';
@@ -49,8 +51,7 @@ class _RequestJobPageState extends State<RequestJobPage> {
     super.initState();
     _hourController = TextEditingController();
     
-    // ✅ CORRECCIÓN 2: Mostrar la hora actual en el texto al iniciar
-    // Usamos addPostFrameCallback para acceder al contexto de forma segura
+    // Establecer la hora inicial en el controlador
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         setState(() {
@@ -60,14 +61,13 @@ class _RequestJobPageState extends State<RequestJobPage> {
     });
   }
 
-  // ✅ CORRECCIÓN 3: Función para mostrar el Reloj Nativo
+  // Función para mostrar el Reloj Nativo
   Future<void> _selectTime(BuildContext context) async {
     final TimeOfDay? picked = await showTimePicker(
       context: context,
       initialTime: _selectedTime,
       builder: (context, child) {
         return MediaQuery(
-          // Opcional: forzar formato 12/24 horas según prefieras
           data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: false),
           child: child!,
         );
@@ -77,9 +77,69 @@ class _RequestJobPageState extends State<RequestJobPage> {
     if (picked != null && picked != _selectedTime) {
       setState(() {
         _selectedTime = picked;
-        // Actualiza el texto visible
         _hourController.text = picked.format(context);
       });
+    }
+  }
+
+  // 🚀 LÓGICA PRINCIPAL CORREGIDA
+  void _submitJobRequest() async {
+    // 1. Validaciones visuales
+    if (_addressController.text.isEmpty ||
+        _hourController.text.isEmpty ||
+        _selectedDate == null ||
+        _selectedCategories.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill all required fields')),
+      );
+      return;
+    }
+
+    // 2. ✅ OBTENER EL ID REAL DEL CLIENTE (FIX SERVER FAILURE)
+    final tokenStorage = injector<TokenStorage>();
+    // Intentamos obtener el ID guardado al hacer login
+    final String? realCustomerId = await tokenStorage.getUserId(); 
+
+    if (realCustomerId == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error: No se pudo identificar al usuario. Reinicia sesión.')),
+        );
+      }
+      return;
+    }
+
+    // 3. Crear DateTime completo (Fecha + Hora seleccionada)
+    final scheduledDateTime = DateTime(
+      _selectedDate!.year,
+      _selectedDate!.month,
+      _selectedDate!.day,
+      _selectedTime.hour,
+      _selectedTime.minute,
+    );
+
+    // 4. Construir el objeto de datos
+    final jobData = {
+      'professionalId': widget.professional.id.toString(),
+      'customerId': realCustomerId, // ✅ AQUI ESTABA EL ERROR, AHORA ES UN GUID REAL
+      'specialty': widget.professional.specialties.isNotEmpty
+          ? widget.professional.specialties.first
+          : 'General',
+      'description': _selectedCategories.join(', '),
+      'address': _addressController.text,
+      'scheduledDate': scheduledDateTime.toIso8601String(),
+      'scheduledHour': _hourController.text,
+      'categories': _selectedCategories,
+      'paymentMethod': _selectedPaymentMethod,
+      'additionalMessage': _messageController.text,
+      'totalCost': widget.professional.hourlyRate * 2,
+    };
+
+    print('📊 JOB DATA CORRECTA: $jobData');
+    
+    // 5. Enviar al Bloc
+    if (mounted) {
+      context.read<ProcessBloc>().add(CreateJob(jobData));
     }
   }
 
@@ -197,7 +257,7 @@ class _RequestJobPageState extends State<RequestJobPage> {
                 ),
                 const SizedBox(height: 24),
                 
-                // Address Field (Texto normal)
+                // Address Field
                 _buildTextField(
                   'Address',
                   Icons.location_on,
@@ -206,12 +266,12 @@ class _RequestJobPageState extends State<RequestJobPage> {
                 
                 const SizedBox(height: 16),
                 
-                // ✅ CORRECCIÓN 4: Campo de HORA con selector de Reloj
+                // Selector de Hora
                 _buildTimePickerField(),
                 
                 const SizedBox(height: 16),
                 
-                // Date Field (Selector de Fecha)
+                // Selector de Fecha
                 _buildDatePickerField(),
                 
                 const SizedBox(height: 16),
@@ -242,7 +302,7 @@ class _RequestJobPageState extends State<RequestJobPage> {
                   width: double.infinity,
                   height: 50,
                   child: ElevatedButton(
-                    onPressed: _submitJobRequest,
+                    onPressed: state is ProcessLoading ? null : _submitJobRequest,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF4169E1),
                       shape: RoundedRectangleBorder(
@@ -250,14 +310,16 @@ class _RequestJobPageState extends State<RequestJobPage> {
                       ),
                       elevation: 0,
                     ),
-                    child: const Text(
-                      'Request Job',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
+                    child: state is ProcessLoading 
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text(
+                          'Request Job',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -271,7 +333,6 @@ class _RequestJobPageState extends State<RequestJobPage> {
 
   // --- WIDGETS AUXILIARES ---
 
-  // ✅ CORRECCIÓN 5: Nuevo Widget específico para el campo de Hora
   Widget _buildTimePickerField() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -287,8 +348,8 @@ class _RequestJobPageState extends State<RequestJobPage> {
         const SizedBox(height: 12),
         TextField(
           controller: _hourController,
-          readOnly: true, // Bloquea el teclado
-          onTap: () => _selectTime(context), // Abre el reloj al tocar
+          readOnly: true,
+          onTap: () => _selectTime(context),
           decoration: InputDecoration(
             hintText: 'Select time',
             prefixIcon: const Icon(Icons.access_time, color: Color(0xFF757575)),
@@ -382,7 +443,6 @@ class _RequestJobPageState extends State<RequestJobPage> {
     );
   }
 
-  // Widget genérico para Address
   Widget _buildTextField(String label, IconData icon, TextEditingController controller) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -462,49 +522,6 @@ class _RequestJobPageState extends State<RequestJobPage> {
         ),
       ],
     );
-  }
-
-  void _submitJobRequest() async {
-    // 1. Validaciones
-    if (_addressController.text.isEmpty ||
-        _hourController.text.isEmpty ||
-        _selectedDate == null ||
-        _selectedCategories.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill all required fields')),
-      );
-      return;
-    }
-
-    // ✅ CORRECCIÓN 6: Crear DateTime seguro usando _selectedTime que ya no es nulo
-    final scheduledDateTime = DateTime(
-      _selectedDate!.year,
-      _selectedDate!.month,
-      _selectedDate!.day,
-      _selectedTime.hour,   // Usamos la hora seleccionada (TimeOfDay)
-      _selectedTime.minute, // Usamos los minutos seleccionados
-    );
-
-    final jobData = {
-      'professionalId': widget.professional.id.toString(),
-      'customerId': widget.professional.id.toString(), // Ojo: verifica si este ID es correcto o si debe ser del usuario logueado
-      'specialty': widget.professional.specialties.isNotEmpty
-          ? widget.professional.specialties.first
-          : 'General',
-      'description': _selectedCategories.join(', '),
-      'address': _addressController.text,
-      'scheduledDate': scheduledDateTime.toIso8601String(),
-      'scheduledHour': _hourController.text, // Manda el string formateado (ej "5:00 PM")
-      'categories': _selectedCategories,
-      'paymentMethod': _selectedPaymentMethod,
-      'additionalMessage': _messageController.text,
-      'totalCost': widget.professional.hourlyRate * 2,
-    };
-
-    print('💰 Enviando solicitud con precio: ${jobData['totalCost']}');
-    
-    // Enviar evento al Bloc
-    context.read<ProcessBloc>().add(CreateJob(jobData));
   }
 
   @override
