@@ -7,7 +7,8 @@ import 'package:alguiendijochamba_app_flutter/features/auth/domain/usecases/regi
 import 'package:alguiendijochamba_app_flutter/features/auth/domain/usecases/login_user.dart';
 import 'package:alguiendijochamba_app_flutter/features/search/domain/usecases/search_professionals_usecase.dart';
 import 'package:alguiendijochamba_app_flutter/features/search/domain/usecases/get_all_tags_usecase.dart';
-
+import 'package:alguiendijochamba_app_flutter/features/profile/domain/usecases/get_profile.dart';
+import 'package:alguiendijochamba_app_flutter/features/profile/domain/usecases/update_profile.dart';
 
 // 🛑 Define/Asigna las instancias necesarias para AppRouter
 // Deberías obtener estas instancias de tu inyector (injector.dart)
@@ -15,7 +16,8 @@ final RegisterUser registerUserUseCase = injector<RegisterUser>();
 final LoginUser loginUserUseCase = injector<LoginUser>();
 final SearchProfessionalsUseCase searchProfessionalsUseCase = injector<SearchProfessionalsUseCase>();
 final GetAllTagsUseCase getAllTagsUseCase = injector<GetAllTagsUseCase>();
-
+final GetProfile getProfileUseCase = injector<GetProfile>();
+final UpdateProfile updateProfileUseCase = injector<UpdateProfile>();
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,6 +29,8 @@ void main() {
     // ¡NUEVAS DEPENDENCIAS INCLUIDAS!
     searchProfessionalsUseCase: searchProfessionalsUseCase,
     getAllTagsUseCase: getAllTagsUseCase,
+    getProfile: getProfileUseCase,
+    updateProfile: updateProfileUseCase,
   );
   
   runApp(MyApp(appRouter: appRouter));

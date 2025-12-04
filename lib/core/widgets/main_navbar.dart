@@ -1,9 +1,19 @@
 import 'package:alguiendijochamba_app_flutter/core/di/injector.dart';
 import 'package:alguiendijochamba_app_flutter/features/home/presentation/pages/home_page.dart';
+import 'package:alguiendijochamba_app_flutter/features/process/domain/repositories/process_repository.dart';
+import 'package:alguiendijochamba_app_flutter/features/process/domain/usecases/cancel_job.dart';
+import 'package:alguiendijochamba_app_flutter/features/process/domain/usecases/complete_job.dart';
+import 'package:alguiendijochamba_app_flutter/features/process/domain/usecases/create_job_request.dart';
+import 'package:alguiendijochamba_app_flutter/features/process/domain/usecases/get_professional_detail.dart';
+import 'package:alguiendijochamba_app_flutter/features/process/presentation/blocs/process_bloc.dart';
+import 'package:alguiendijochamba_app_flutter/features/process/presentation/blocs/process_event.dart';
+import 'package:alguiendijochamba_app_flutter/features/process/presentation/pages/jobs_list_page.dart';
 import 'package:alguiendijochamba_app_flutter/features/search/domain/usecases/get_all_tags_usecase.dart';
 import 'package:alguiendijochamba_app_flutter/features/search/domain/usecases/search_professionals_usecase.dart';
 import 'package:alguiendijochamba_app_flutter/features/search/presentation/pages/search_page.dart';
+import 'package:alguiendijochamba_app_flutter/features/profile/presentation/pages/profile_page.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:persistent_bottom_nav_bar/persistent_bottom_nav_bar.dart';
 
 class MainPage extends StatefulWidget {
@@ -14,33 +24,50 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
-  // 🛑 1. CORRECCIÓN: Solo declaramos _controller una vez
-  late PersistentTabController _controller; 
+  late PersistentTabController _controller;
   late final SearchProfessionalsUseCase searchUseCase;
   late final GetAllTagsUseCase getAllTagsUseCase;
-  // La línea 'late PersistentTabController _controller;' ha sido eliminada
+
+  static const int processTabIndex = 2; // Home=0, Search=1, Process=2
 
   @override
   void initState() {
     super.initState();
     searchUseCase = injector<SearchProfessionalsUseCase>();
     getAllTagsUseCase = injector<GetAllTagsUseCase>();
-    
     _controller = PersistentTabController(initialIndex: 0);
   }
-  
-  // navegacion remplazas ps
+
   List<Widget> _buildScreens() {
     return [
-      // 🛑 2. CORRECCIÓN: Quitamos 'const' porque Home ahora recibe una variable de estado (_controller)
-      Home(controller: _controller), 
+      // 🏠 Tab Home
+      Home(controller: _controller),
+      
+      // 🔍 Tab Search
       SearchPage(
-            searchUseCase: searchUseCase,
-            getAllTagsUseCase: getAllTagsUseCase,
-          ), 
-      const Scaffold(body: Center(child: Text('Process Page'))), // Process
-      const Scaffold(body: Center(child: Text('Rewards Page'))), // Rewards
-      const Scaffold(body: Center(child: Text('Profile Page'))), // Profile
+        searchUseCase: searchUseCase,
+        getAllTagsUseCase: getAllTagsUseCase,
+      ),
+      
+      // 📋 Tab Process: lista de jobs
+      BlocProvider<ProcessBloc>(
+        create: (_) => ProcessBloc(
+          getProfessionalDetail: injector<GetProfessionalDetail>(),
+          createJobRequest: injector<CreateJobRequest>(),
+          completeJob: injector<CompleteJob>(),
+          cancelJob: injector<CancelJob>(),
+          repository: injector<ProcessRepository>(),
+        )..add(const LoadAvailableJobs()),
+        child: JobsListPage(
+          repository: injector<ProcessRepository>(),
+        ),
+      ),
+      
+      // 🎁 Tab Rewards
+      const Scaffold(body: Center(child: Text('Rewards Page'))),
+      
+      // 👤 Tab Profile (ACTUALIZADO)
+      const ProfilePage(),
     ];
   }
 
@@ -98,6 +125,10 @@ class _MainPageState extends State<MainPage> {
       stateManagement: true,
       hideNavigationBarWhenKeyboardAppears: true,
       navBarStyle: NavBarStyle.style3,
+      onItemSelected: (index) {
+        // Opcional: lógica adicional al cambiar de tab
+        debugPrint('Tab seleccionado: $index');
+      },
     );
   }
 }
