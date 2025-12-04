@@ -128,30 +128,6 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: OutlinedButton.icon(
-                    onPressed: () {},
-                    style: OutlinedButton.styleFrom(
-                      backgroundColor: const Color(0xFFF3F4F6),
-                      side: const BorderSide(color: Color(0xFFE5E7EB), width: 1.35),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    icon: const Icon(Icons.g_mobiledata, color: Colors.black),
-                    label: const Text(
-                      'Continue with Google',
-                      style: TextStyle(
-                        color: Color(0xFF374151),
-                        fontSize: 16,
-                        fontFamily: 'Arimo',
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                  ),
-                ),
                 const SizedBox(height: 16),
                 Row(
                   children: [
