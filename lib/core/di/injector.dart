@@ -19,6 +19,7 @@ import 'package:alguiendijochamba_app_flutter/features/profile/data/repositories
 import 'package:alguiendijochamba_app_flutter/features/search/data/datasources/professional_remote_data_source.dart';
 import 'package:alguiendijochamba_app_flutter/features/search/data/datasources/tag_remote_data_source.dart';
 import 'package:alguiendijochamba_app_flutter/features/search/data/repositories/professional_repository_impl.dart';
+import 'package:alguiendijochamba_app_flutter/features/search/data/repositories/professional_repository_impl.dart';
 import 'package:alguiendijochamba_app_flutter/features/search/data/repositories/tag_repository_impl.dart';
 import 'package:alguiendijochamba_app_flutter/features/search/domain/repositories/professional_repository.dart';
 import 'package:alguiendijochamba_app_flutter/features/search/domain/repositories/tag_repository.dart';
@@ -41,6 +42,16 @@ import 'package:alguiendijochamba_app_flutter/features/profile/data/datasources/
 import 'package:alguiendijochamba_app_flutter/features/profile/domain/repositories/profile_repository.dart';
 import 'package:alguiendijochamba_app_flutter/features/profile/domain/usecases/get_profile.dart';
 import 'package:alguiendijochamba_app_flutter/features/profile/domain/usecases/update_profile.dart';
+import 'package:alguiendijochamba_app_flutter/features/process/presentation/blocs/process_bloc.dart';
+import 'package:alguiendijochamba_app_flutter/core/api/signalr_service.dart'; // <-- NUEVO
+
+
+
+// ✨ BASE URL - ASEGÚRATE DE QUE ESTÉ EN constants.dart
+// const String BASE_URL = 'http://10.0.2.2:5000/api/v1';  // Android Emulator
+// const String BASE_URL = 'http://localhost:5000/api/v1';  // iOS Simulator
+// const String BASE_URL = 'http://192.168.x.x:5000/api/v1';  // Real device
+
 
 // 1. Almacenamiento de Tokens
 final TokenStorage tokenStorage = TokenStorageImpl();
@@ -92,6 +103,7 @@ final SearchCubit searchCubit = SearchCubit(
 final TagFilterCubit tagFilterCubit = TagFilterCubit(
   getAllTagsUseCase: getAllTagsUseCase,
 );
+
 
 // NOTIFICATIONS
 final NotificationRemoteDataSource notificationRemoteDataSource =
@@ -162,6 +174,37 @@ final UpdateProfile updateProfileUseCase = UpdateProfile(profileRepository);
 // ⚠️ OJO: NO creamos aquí un ProfileBloc global.
 // Cada pantalla debe crear su propio ProfileBloc con estos usecases y el repository.
 
+// PROCESS
+final ProcessRemoteDataSource processRemoteDataSource = 
+    ProcessRemoteDataSource(apiClient: apiClient);
+
+final ProcessRepository processRepository = 
+    ProcessRepositoryImpl(remoteDataSource: processRemoteDataSource);
+
+final GetProfessionalDetail getProfessionalDetail = 
+    GetProfessionalDetail(processRepository);
+
+final CreateJobRequest createJobRequest = 
+    CreateJobRequest(processRepository);
+
+final CompleteJob completeJob = 
+    CompleteJob(processRepository);
+
+final CancelJob cancelJob = 
+    CancelJob(processRepository);
+
+final ProcessBloc processBloc = ProcessBloc(
+  getProfessionalDetail: getProfessionalDetail,
+  createJobRequest: createJobRequest,
+  completeJob: completeJob,
+  cancelJob: cancelJob,
+);
+
+final SignalRService signalRService = SignalRService(
+  tokenStorage: tokenStorage,
+  processBloc: processBloc // Pasa la instancia del BLoC
+);
+
 T injector<T>() {
   // Token Storage
   if (T == TokenStorage) return tokenStorage as T;
@@ -215,4 +258,24 @@ T injector<T>() {
   // Las pantallas deben crear sus propios bloques con BlocProvider usando estos casos de uso.
 
   throw Exception("Dependencia no registrada: $T");
+    // Notificaciones
+    if (T == GetNotificationsUseCase) return getNotificationsUseCase as T;
+    if (T == MarkAsReadUseCase) return markAsReadUseCase as T;
+    if (T == DismissNotificationUseCase) return dismissNotificationUseCase as T;
+    
+    // Process
+    if (T == ProcessBloc) return processBloc as T;
+    if (T == GetProfessionalDetail) return getProfessionalDetail as T;
+    if (T == CreateJobRequest) return createJobRequest as T;
+    if (T == CompleteJob) return completeJob as T;
+    if (T == CancelJob) return cancelJob as T;
+    if (T == ProcessRepository) return processRepository as T;
+
+     if (T == ProcessBloc) return processBloc as T;
+    
+    // --- AÑADE EL NUEVO SERVICIO ---
+    if (T == SignalRService) return signalRService as T;
+
+    throw Exception("Dependencia no registrada: $T");
+    
 }

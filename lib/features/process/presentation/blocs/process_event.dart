@@ -61,3 +61,20 @@ class CancelActiveJob extends ProcessEvent {
 class LoadAvailableJobs extends ProcessEvent {
   const LoadAvailableJobs();
 }
+
+class JobStatusUpdatedByHub extends ProcessEvent {
+  final String jobId;
+  final String status;
+  final String? professionalId;
+  final double? proposedCost; // <-- 🚀 AÑADIDO
+
+  const JobStatusUpdatedByHub({
+    required this.jobId, 
+    required this.status,
+    this.professionalId,
+    this.proposedCost, // <-- 🚀 AÑADIDO
+  });
+
+  @override
+  List<Object?> get props => [jobId, status, professionalId, proposedCost];
+}

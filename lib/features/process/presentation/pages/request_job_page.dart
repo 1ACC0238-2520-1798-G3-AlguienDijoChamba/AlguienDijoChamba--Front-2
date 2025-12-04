@@ -29,10 +29,11 @@ class _RequestJobPageState extends State<RequestJobPage> {
   final _hourController = TextEditingController();
   final _dateController = TextEditingController();
   final _messageController = TextEditingController();
+  DateTime? _selectedDate;
+  TimeOfDay? _selectedTime; // <-- NUEVO: para guardar la hora
 
   String _selectedPaymentMethod = 'Credit/Debit Card';
   final List<String> _selectedCategories = ['High Priority'];
-  DateTime? _selectedDate;
 
   final List<Map<String, dynamic>> _categories = [
     {'label': 'High Priority', 'color': const Color(0xFFB2DFDB)},
@@ -69,19 +70,14 @@ class _RequestJobPageState extends State<RequestJobPage> {
       body: BlocConsumer<ProcessBloc, ProcessState>(
         listener: (context, state) {
           if (state is JobCreated) {
-            // ✅ Reusar el mismo ProcessBloc para PaymentPage
-            final currentBloc = context.read<ProcessBloc>();
-
+            // 🚀 Navega a PaymentPageWrapper para esperar confirmación del técnico
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => BlocProvider<ProcessBloc>.value(
-                  value: currentBloc,
-                  child: PaymentPage(
-                    professional: widget.professional,
-                    job: state.job,
-                    repository: widget.repository,
-                  ),
+                builder: (context) => PaymentPageWrapper(
+                  professional: widget.professional,
+                  job: state.job,
+                  repository: widget.repository,
                 ),
               ),
             );
@@ -187,7 +183,8 @@ class _RequestJobPageState extends State<RequestJobPage> {
                   _addressController,
                 ),
                 const SizedBox(height: 16),
-                _buildTextField('Hour', Icons.access_time, _hourController),
+
+                _buildTimePickerField(),
                 const SizedBox(height: 16),
                 _buildDatePickerField(),
                 const SizedBox(height: 16),
@@ -264,14 +261,16 @@ class _RequestJobPageState extends State<RequestJobPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
+                // --- CORRECCIÓN IMAGEN 3: Mostrar precio del técnico ---
                 Text(
-                  '\$${widget.professional.hourlyRate.toStringAsFixed(0)}/hr',
+                  'S/${widget.professional.hourlyRate.toStringAsFixed(2)}/hr', // <-- USA EL VALOR REAL
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF212121),
                   ),
                 ),
+                // ---------------------------------------------------
                 const Text(
                   'Starting rate',
                   style: TextStyle(fontSize: 12, color: Color(0xFF757575)),
@@ -416,6 +415,68 @@ class _RequestJobPageState extends State<RequestJobPage> {
     );
   }
 
+  // --- CORRECCIÓN IMAGEN 4: Implementar TimePicker ---
+  Widget _buildTimePickerField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Hour (Formato 24H)',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF212121),
+          ),
+        ),
+        const SizedBox(height: 12),
+        GestureDetector(
+          onTap: () async {
+            final pickedTime = await showTimePicker(
+              context: context,
+              initialTime: _selectedTime ?? TimeOfDay.now(),
+              // Usar formato 24 horas
+              builder: (context, child) {
+                return MediaQuery(
+                  data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
+                  child: child!,
+                );
+              },
+            );
+            if (pickedTime != null) {
+              setState(() {
+                _selectedTime = pickedTime;
+                // Formatea a "HH:mm" (ej. "14:30")
+                _hourController.text = "${pickedTime.hour.toString().padLeft(2, '0')}:${pickedTime.minute.toString().padLeft(2, '0')}";
+              });
+            }
+          },
+          child: TextField(
+            controller: _hourController,
+            enabled: false, // El campo no se edita manualmente
+            decoration: InputDecoration(
+              hintText: 'Select a time (HH:mm)',
+              prefixIcon: const Icon(
+                Icons.access_time,
+                color: Color(0xFF757575),
+              ),
+              filled: true,
+              fillColor: Colors.white,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+              disabledBorder: OutlineInputBorder( // Borde cuando está deshabilitado
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+  // --------------------------------------------------
+
   void _submitJobRequest() {
     if (_addressController.text.isEmpty ||
         _hourController.text.isEmpty ||
@@ -427,24 +488,40 @@ class _RequestJobPageState extends State<RequestJobPage> {
       return;
     }
 
+    // Validación adicional de fecha y hora
+    if (_selectedDate == null || _selectedTime == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select date and time')),
+      );
+      return;
+    }
+
+    // ✨ DEBUG
+    print('🔍 Professional ID Type: ${widget.professional.id.runtimeType}');
+    print('🔍 Professional ID Value: ${widget.professional.id}');
+    print(
+      '🔍 Professional ID isEmpty: ${widget.professional.id.toString().isEmpty}',
+    );
+
+    // Combina Fecha y Hora
     final scheduledDateTime = DateTime(
       _selectedDate!.year,
       _selectedDate!.month,
       _selectedDate!.day,
-      int.parse(_hourController.text.split(':')[0]),
-      int.parse(_hourController.text.split(':')[1]),
+      _selectedTime!.hour,
+      _selectedTime!.minute,
     );
 
     final jobData = {
       'professionalId': widget.professional.id.toString(),
       'customerId': widget.professional.id.toString(),
-      'specialty': widget.professional.specialties?.isNotEmpty == true
-          ? widget.professional.specialties!.first
+      'specialty': widget.professional.specialties.isNotEmpty
+          ? widget.professional.specialties.first
           : 'General',
       'description': _selectedCategories.join(', '),
       'address': _addressController.text,
-      'scheduledDate': scheduledDateTime.toIso8601String(),
-      'scheduledHour': _hourController.text,
+      'scheduledDate': scheduledDateTime.toIso8601String(), // Envía fecha y hora combinadas
+      'scheduledHour': _hourController.text, // Envía el string "HH:mm"
       'categories': _selectedCategories,
       'paymentMethod': _selectedPaymentMethod,
       'additionalMessage': _messageController.text,

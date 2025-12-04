@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
+import 'package:alguiendijochamba_app_flutter/core/di/injector.dart';
+import 'package:alguiendijochamba_app_flutter/features/process/domain/repositories/process_repository.dart';
 import '../../domain/entities/professional.dart';
 import '../../domain/entities/job.dart';
 import '../../domain/repositories/process_repository.dart';
 import '../blocs/process_bloc.dart';
+import '../blocs/process_state.dart';
 import '../widgets/professional_header_widget.dart';
 import 'finish_review_page.dart';
 import 'cancel_job_page.dart';
@@ -23,129 +25,155 @@ class ActiveJobPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Aquí YA existe un ProcessBloc proveniente de RequestJobPage
-    return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF212121)),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'Process',
-          style: TextStyle(
-            color: Color(0xFF212121),
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
+    return BlocProvider.value(
+      value: injector<ProcessBloc>(),
+      // --- AÑADIR BLOCLISTENER PARA SIGNALR ---
+      child: BlocListener<ProcessBloc, ProcessState>(
+        listener: (context, state) {
+          if (state is JobAcceptedByTechnician && state.jobId == job.id) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('¡Un técnico ha aceptado tu solicitud!'),
+                backgroundColor: Colors.green,
+              ),
+            );
+            // Aquí podrías refrescar la data o cambiar la UI
+          }
+          if (state is JobDeclinedByTechnician && state.jobId == job.id) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('El técnico ha rechazado la solicitud.'),
+                backgroundColor: Colors.orange,
+              ),
+            );
+            // Aquí deberías navegar hacia atrás o permitir buscar otro técnico
+          }
+        },
+        // ------------------------------------------
+        child: Scaffold(
+          backgroundColor: const Color(0xFFF5F5F5),
+          appBar: AppBar(
+            backgroundColor: Colors.white,
+            elevation: 0,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Color(0xFF212121)),
+              onPressed: () => Navigator.pop(context),
+            ),
+            title: const Text(
+              'Process',
+              style: TextStyle(
+                color: Color(0xFF212121),
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ProfessionalHeaderWidget(professional: professional),
+              const SizedBox(height: 24),
+              const Text(
+                'Description',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF212121),
+                ),
+              ),
+              const SizedBox(height: 16),
+              _buildInfoRow(Icons.location_on, job.address),
+              const SizedBox(height: 16),
+              _buildInfoRow(Icons.access_time, job.scheduledHour),
+              const SizedBox(height: 16),
+              _buildInfoRow(Icons.calendar_today, _formatDate(job.scheduledDate)),
+              const SizedBox(height: 24),
+              const Text(
+                'Message',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF212121),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  job.additionalMessage?.isEmpty ?? true
+                      ? 'No additional message'
+                      : job.additionalMessage!,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFF757575),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 32),
+              Row(
+                children: [
+                  Expanded(
+                    child: SizedBox(
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: () => _finishJobWithBackend(context),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF4169E1),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: const Text(
+                          'Finish Job',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: SizedBox(
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: () => _cancelJobWithBackend(context),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF4169E1),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: const Text(
+                          'Cancel Job',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+            ],
           ),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ProfessionalHeaderWidget(professional: professional),
-            const SizedBox(height: 24),
-            const Text(
-              'Description',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF212121),
-              ),
-            ),
-            const SizedBox(height: 16),
-            _buildInfoRow(Icons.location_on, job.address),
-            const SizedBox(height: 16),
-            _buildInfoRow(Icons.access_time, job.scheduledHour),
-            const SizedBox(height: 16),
-            _buildInfoRow(Icons.calendar_today, _formatDate(job.scheduledDate)),
-            const SizedBox(height: 24),
-            const Text(
-              'Message',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF212121),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                job.additionalMessage?.isEmpty ?? true
-                    ? 'No additional message'
-                    : job.additionalMessage!,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Color(0xFF757575),
-                ),
-              ),
-            ),
-            const SizedBox(height: 32),
-            Row(
-              children: [
-                Expanded(
-                  child: SizedBox(
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: () => _finishJobWithBackend(context),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF4169E1),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: const Text(
-                        'Finish Job',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: SizedBox(
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: () => _cancelJobWithBackend(context),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF4169E1),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: const Text(
-                        'Cancel Job',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-          ],
-        ),
-      ),
+    ),
     );
   }
 

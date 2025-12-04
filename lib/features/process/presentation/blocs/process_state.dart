@@ -57,14 +57,38 @@ class JobCancelled extends ProcessState {
   const JobCancelled();
 }
 
-// 🔹 NUEVO: lista de jobs disponibles
-class JobsLoaded extends ProcessState {
-  final List<Job> jobs;
+class JobAcceptedShowPayment extends ProcessState {
+  final String jobId;
+  final String professionalId;
+  final double proposedCost;
 
-  const JobsLoaded(this.jobs);
+  const JobAcceptedShowPayment({
+    required this.jobId,
+    required this.professionalId,
+    required this.proposedCost,
+  });
 
   @override
-  List<Object?> get props => [jobs];
+  List<Object?> get props => [jobId, professionalId, proposedCost];
+}
+
+// ✨ Estados para SignalR - Notificaciones de técnicos
+class JobAcceptedByTechnician extends ProcessState {
+  final String jobId;
+
+  const JobAcceptedByTechnician(this.jobId);
+
+  @override
+  List<Object?> get props => [jobId];
+}
+
+class JobDeclinedByTechnician extends ProcessState {
+  final String jobId;
+
+  const JobDeclinedByTechnician(this.jobId);
+
+  @override
+  List<Object?> get props => [jobId];
 }
 
 // ✨ Estados para Pagos

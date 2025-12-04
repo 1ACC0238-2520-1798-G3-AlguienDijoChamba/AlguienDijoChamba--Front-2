@@ -169,4 +169,21 @@ class ProcessBloc extends Bloc<ProcessEvent, ProcessState> {
       },
     );
   }
+    Future<void> _onJobStatusUpdatedByHub(
+    JobStatusUpdatedByHub event,
+    Emitter<ProcessState> emit,
+  ) async {
+    print('SignalR BLoC: Recibido JobId: ${event.jobId} con estado: ${event.status}');
+    
+    if (event.status == "Accepted") {
+      // 🚀 EMITE EL NUEVO ESTADO CON EL COSTO
+      emit(JobAcceptedShowPayment(
+        jobId: event.jobId,
+        professionalId: event.professionalId ?? 'unknown',
+        proposedCost: event.proposedCost ?? 0.0
+      ));
+    } else if (event.status == "Declined") {
+      emit(JobDeclinedByTechnician(event.jobId));
+    } 
+  }
 }

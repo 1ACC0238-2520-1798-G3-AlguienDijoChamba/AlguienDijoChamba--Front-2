@@ -3,10 +3,13 @@ import 'package:alguiendijochamba_app_flutter/core/di/injector.dart';
 import 'package:alguiendijochamba_app_flutter/core/storage/token_storage.dart';
 import 'package:alguiendijochamba_app_flutter/features/auth/domain/repositories/auth_repository.dart';
 import 'package:alguiendijochamba_app_flutter/features/auth/domain/usecases/login_user.dart';
+import 'package:alguiendijochamba_app_flutter/features/auth/domain/entities/session.dart'; 
 import 'package:alguiendijochamba_app_flutter/features/auth/domain/entities/session.dart';
 import 'package:alguiendijochamba_app_flutter/features/shared/widgets/TopBar.dart';
 import 'package:alguiendijochamba_app_flutter/features/auth/presentation/widgets/text_field.dart';
 import 'package:alguiendijochamba_app_flutter/core/widgets/main_navbar.dart';
+import 'package:alguiendijochamba_app_flutter/core/api/signalr_service.dart'; 
+import 'package:alguiendijochamba_app_flutter/core/di/injector.dart'; 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
@@ -56,6 +59,17 @@ class _LoginPageState extends State<LoginPage> {
     try {
       final String email = emailController.text.trim(); 
       final String password = passwordController.text.trim();
+      final Session session = await widget.loginUser.call(email, password);
+      final String customerId = session.user.id; 
+      await widget.authRepository.saveCurrentUserId(customerId); 
+      await injector<SignalRService>().connect();
+      // 🛑 3. GUARDAR EL ID DE CLIENTE REAL 🛑
+      await widget.authRepository.saveCurrentUserId(customerId); 
+
+      // Mostrar mensaje y navegar
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Login successful!')),
+      );
       
       debugPrint('🔹 LOGIN PAGE: Intentando login con email: $email');
       

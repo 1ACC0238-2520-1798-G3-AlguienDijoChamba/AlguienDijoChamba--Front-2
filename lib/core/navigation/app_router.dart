@@ -26,6 +26,8 @@ import '../../features/auth/domain/usecases/register_user.dart';
 import '../../features/auth/domain/usecases/login_user.dart';
 import '../../features/search/domain/usecases/search_professionals_usecase.dart';
 import '../../features/search/domain/usecases/get_all_tags_usecase.dart';
+import '../../features/chat/presentation/pages/chat_list_page.dart';
+import '../../features/chat/presentation/pages/chat_detail_page.dart';
 import '../../features/profile/domain/usecases/get_profile.dart';
 import '../../features/profile/domain/usecases/update_profile.dart';
 
@@ -170,8 +172,15 @@ class AppRouter {
         );
       case '/chat':
         return MaterialPageRoute(
-          builder: (_) => const PlaceholderScreen(title: 'Chat'),
+          builder: (_) => ChatListPage(),   // 👈 sin const
         );
+
+      case '/chat_detail':
+        return MaterialPageRoute(
+          builder: (_) => ChatDetailPage(),
+          settings: settings, // 👈 IMPORTANTE
+        );
+
       case '/profile_page_full':
         return MaterialPageRoute(
           builder: (_) => const PlaceholderScreen(title: 'Mi Perfil'),

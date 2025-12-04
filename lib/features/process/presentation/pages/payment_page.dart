@@ -1,25 +1,88 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:alguiendijochamba_app_flutter/core/di/injector.dart';
 import '../../domain/entities/professional.dart';
 import '../../domain/entities/job.dart';
 import '../../domain/repositories/process_repository.dart';
+import '../blocs/process_bloc.dart';
+import '../blocs/process_state.dart';
 import '../widgets/professional_header_widget.dart';
 import '../widgets/payment_transaction_item.dart';
 import 'payment_success_page.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import '../blocs/process_bloc.dart';
-import 'payment_success_page.dart';
 
+// --- ESTA PÁGINA ES AHORA EL LISTENER ---
+class PaymentPageWrapper extends StatelessWidget {
+  final Professional professional;
+  final Job job;
+  final ProcessRepository repository;
+
+  const PaymentPageWrapper({
+    super.key,
+    required this.professional,
+    required this.job,
+    required this.repository,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocListener<ProcessBloc, ProcessState>(
+      bloc: injector<ProcessBloc>(), // Escucha el BLoC global
+      listener: (context, state) {
+        // 🚀 DISPARA LA PANTALLA DE PAGO (Imagen 5)
+        if (state is JobAcceptedShowPayment) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => PaymentPage(
+                professional: professional,
+                job: job,
+                repository: repository,
+                amountToPay: state.proposedCost, // <-- 🚀 USA EL COSTO REAL
+              ),
+            ),
+          );
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text("Esperando Respuesta"),
+          backgroundColor: Colors.white,
+          foregroundColor: const Color(0xFF212121),
+        ),
+        body: const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text(
+                'Esperando confirmación del técnico...',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Color(0xFF757575),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// --- TU PÁGINA DE PAGO (Imagen 5/6) ---
 class PaymentPage extends StatefulWidget {
   final Professional professional;
   final Job job;
   final ProcessRepository repository;
+  final double? amountToPay; // <-- 🚀 NUEVO: Costo propuesto por el técnico
 
   const PaymentPage({
     super.key,
     required this.professional,
     required this.job,
     required this.repository,
+    this.amountToPay, // Opcional, si no viene usa job.totalCost
   });
 
   @override
@@ -29,8 +92,9 @@ class PaymentPage extends StatefulWidget {
 class _PaymentPageState extends State<PaymentPage> {
   @override
   Widget build(BuildContext context) {
-    final double advancePayment = widget.job.totalCost / 2;
-    final double totalAmount = widget.job.totalCost;
+    // 🚀 USA EL MONTO PROPUESTO POR EL TÉCNICO SI EXISTE, SINO USA EL COSTO DEL JOB
+    final double totalAmount = widget.amountToPay ?? widget.job.totalCost;
+    final double advancePayment = totalAmount / 2;
     final double availableBalance = 1250.0;
 
     return Scaffold(
@@ -293,9 +357,7 @@ Future<void> _processPaymentLocally(double amount) async {
       return;
     }
 
-    // ✅ Tomar el bloc AQUÍ, usando el contexto de PaymentPage
-    final currentBloc = context.read<ProcessBloc>();
-
+    // 🚀 Al éxito, navegar a PaymentSuccessPage (Imagen 6)
     print('🔄 Navegando a PaymentSuccessPage...');
     await Navigator.pushReplacement(
       context,
