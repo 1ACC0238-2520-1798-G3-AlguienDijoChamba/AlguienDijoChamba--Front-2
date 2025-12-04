@@ -29,10 +29,6 @@ class Home extends StatelessWidget {
             child: _buildPopularServices(context),
           ),
 
-          const Padding(
-             padding: EdgeInsets.only(bottom: 24.0), // Espacio después del banner
-             child: GoldMemberBanner(), 
-          ),
 
           // 3. Contenido Sugerido/Profesionales
           const Padding(
