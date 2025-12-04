@@ -16,6 +16,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/search/presentation/pages/search_page.dart';
+// import '../../features/professionals/presentation/pages/professional_details_page.dart';
+import '../../features/reward/presentation/pages/reward_page.dart'; 
+
 import '../../features/home/presentation/pages/home_page.dart';
 
 // --- Importaciones de UseCases ---
@@ -169,6 +172,17 @@ class AppRouter {
         return MaterialPageRoute(
           builder: (_) => const PlaceholderScreen(title: 'Chat'),
         );
+      case '/profile_page_full':
+        return MaterialPageRoute(
+          builder: (_) => const PlaceholderScreen(title: 'Mi Perfil'),
+        );
+      case '/rewards':
+        return MaterialPageRoute(
+          builder: (_) => const RewardPage(),
+        );
+        
+      
+      // ----------------------------------------------------
 
       // ────────────────────────────────────────────────────────
       // RUTA POR DEFECTO / ERROR
